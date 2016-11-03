@@ -3,8 +3,6 @@
 
 'use strict';
 
-var ws = require('ws');
-
 describe('Auth.Service', function () {
     var server;
     var sandbox = sinon.sandbox.create();
@@ -13,6 +11,7 @@ describe('Auth.Service', function () {
     var SUCCESS_STATUS = 200;
     var UNAUTHORIZED_STATUS = 401;
     var ERROR_STATUS = 500;
+
 
     var token = '';
     var endpoint = {
@@ -30,17 +29,20 @@ describe('Auth.Service', function () {
     function startServer(endpoint){
         var Server = helper.injector.get('Http.Server');
         server = new Server(endpoint);
-        server.start();
+        return server.start();
     }
 
     function cleanUp(){
-        server.stop();
-        sandbox.restore();
-        restoreConfig();
+        return server.stop()
+            .then(function(){
+                sandbox.restore();
+                return restoreConfig();
+            }
+        );
     }
 
     function setConfig(){
-        helper.injector.get('Services.Configuration')
+        return helper.injector.get('Services.Configuration')
             .set('authPasswordHash', 'KcBN9YobNV0wdux8h0fKNqi4uoKCgGl/j8c6Y' +
             'GlG7iA0PB3P9ojbmANGhDlcSBE0iOTIsYsGbtSsbqP4wvsVcw==')
             .set('authPasswordSalt', 'zlxkgxjvcFwm0M8sWaGojh25qNYO8tuNWUMN4' +
@@ -49,7 +51,7 @@ describe('Auth.Service', function () {
     }
 
     function restoreConfig(){
-        helper.injector.get('Services.Configuration')
+        return helper.injector.get('Services.Configuration')
             .set('authPasswordHash', 'KcBN9YobNV0wdux8h0fKNqi4uoKCgGl/j8c6' +
             'YGlG7iA0PB3P9ojbmANGhDlcSBE0iOTIsYsGbtSsbqP4wvsVcw==')
             .set('authPasswordSalt', 'zlxkgxjvcFwm0M8sWaGojh25qNYO8tuNWUMN' +
@@ -60,7 +62,6 @@ describe('Auth.Service', function () {
     helper.before(function () {
         return [
             dihelper.simpleWrapper(require('swagger-express-mw'), 'swagger'),
-            dihelper.simpleWrapper(ws.Server, 'WebSocketServer'),
             dihelper.simpleWrapper({}, 'TaskGraph.TaskGraph'),
             dihelper.simpleWrapper({}, 'TaskGraph.Store'),
             dihelper.simpleWrapper({}, 'Task.Services.OBM'),
@@ -96,6 +97,10 @@ describe('Auth.Service', function () {
             comparePassword: function(password) { return password === 'admin123'; }
         });
         waterline.localusers.findOne.resolves();
+
+        //Override the ES6-Thim Promise with Bluebird Promise from DI
+        //Promise.delay is only valid on bluebird Promise
+        Promise = helper.injector.get('Promise');
     });
 
     after('remove waterline definition', function() {
@@ -103,11 +108,9 @@ describe('Auth.Service', function () {
     });
 
     describe('Auth.Service', function () {
-        var authServices;
         before('start http and https server with auth enabled', function () {
             setConfig();
-            startServer(endpoint);
-            authServices = helper.injector.get('Auth.Services');
+            return startServer(endpoint);
         });
 
         it('should return a token from /login', function () {
@@ -252,7 +255,7 @@ describe('Auth.Service', function () {
         });
 
         after('Clean up', function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 
@@ -262,7 +265,7 @@ describe('Auth.Service', function () {
                 return this.error('something');
             });
             setConfig();
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should fail with auth', function() {
@@ -277,7 +280,7 @@ describe('Auth.Service', function () {
 
         after('stop server, restore mock and configure',function () {
             sandbox.restore();
-            cleanUp();
+            return cleanUp();
         });
     });
 
@@ -285,19 +288,19 @@ describe('Auth.Service', function () {
         before('Mock configure settings', function () {
             this.timeout(5000);
 
-            helper.injector.get('Services.Configuration')
+            return helper.injector.get('Services.Configuration')
                 .set('authTokenExpireIn', 'aaa');
         });
 
         it('Should throw exception with wrong length of salt from config', function() {
             var authService = helper.injector.get('Auth.Services');
-            expect(function () {
+            return expect(function () {
                 authService.init();
             }).to.throw(Error);
         });
 
         after('stop server, restore mock and configure',function () {
-            restoreConfig();
+            return restoreConfig();
         });
     });
 
@@ -308,7 +311,7 @@ describe('Auth.Service', function () {
             setConfig();
             helper.injector.get('Services.Configuration')
                 .set('authTokenExpireIn', 1);
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should return a token from /login', function () {
@@ -324,8 +327,6 @@ describe('Auth.Service', function () {
 
         it('Should get token expire error', function() {
             this.timeout(5000);
-
-            var Promise = helper.injector.get('Promise');
             return Promise.delay(1000)
                 .then(function(){
                     return helper.request('https://localhost:9443')
@@ -339,20 +340,35 @@ describe('Auth.Service', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 
     describe('Token should not expire as expected', function () {
         before('start https server expiration set to 1 second', function () {
+
+            /*
+            TODO: https://github.com/RackHD/RackHD/issues/195
+
             return Promise.resolve().then(function(){
+            setConfig();
+            helper.injector.get('Services.Configuration')
+                .set('authTokenExpireIn', 1);
+
+            return startServer(endpoint)
+                .then(function () {
+                    return server.stop();
+                })
+                .then(function () {
+                    helper.injector.get('Services.Configuration')
+                        .set('authTokenExpireIn', 0);
+                    return startServer(endpoint);
+                });
+            });
+            */
+
+            return Promise.resolve().then(function() {
                 setConfig();
-                helper.injector.get('Services.Configuration')
-                    .set('authTokenExpireIn', 1);
-                startServer(endpoint);
-            }).then(function() {
-                server.stop();
-            }).then(function (){
                 helper.injector.get('Services.Configuration')
                     .set('authTokenExpireIn', 0);
                 startServer(endpoint);
@@ -388,7 +404,7 @@ describe('Auth.Service', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 
@@ -407,7 +423,7 @@ describe('Auth.Service', function () {
                     );
                 });
             setConfig();
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should return a token from /login', function () {
@@ -434,7 +450,7 @@ describe('Auth.Service', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 });

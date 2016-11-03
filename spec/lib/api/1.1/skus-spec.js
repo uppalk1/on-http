@@ -118,7 +118,7 @@ describe('Http.Api.Skus', function () {
         it('should return the same sku from GET /skus/:id', function () {
             return helper.request().get('/api/1.1/skus/' + sku.id)
             .expect('Content-Type', /^application\/json/)
-            .expect(200, _.merge({}, sku, { packInfo: null }) );
+            .expect(200, _.merge({}, sku, { packInfo: { description: null, version: null } }) );
         });
 
         describe('PATCH /skus/:id', function () {
@@ -247,7 +247,7 @@ describe('Http.Api.Skus', function () {
             });
 
             it('should process a .tar.gz file', function () {
-                var skus = helper.injector.get('Http.Api.Skus');
+                var skus = helper.injector.get('Http.Services.SkuPack');
                 var fs = helper.injector.get('fs');
                 var req = fs.createReadStream('spec/lib/services/sku-static/pack.tar.gz');
                 var Promise = helper.injector.get('Promise');
@@ -255,22 +255,18 @@ describe('Http.Api.Skus', function () {
                     _resolve = resolve;
                     _reject = reject;
                 });
-                var res = {
-                    status: function(code) {
-                        if(code === 201) {
-                            _resolve(201);
-                        }
-                        _reject(code);
-                        return res;
-                    },
-                    send: sinon.stub(),
-                    json: function(obj) {
-                        return JSON.stringify(obj);
-                    }
-                };
 
                 req.on('open', function() {
-                    skus.skuPackHandler(req, res);
+                    req.headers = {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    };
+                    skus.skuPackHandler(req)
+                    .then(function() {
+                        _resolve(201);
+                    })
+                    .catch(function(err) {
+                        _reject( err );
+                    });
                 });
 
                 return promise.then(function(code) {
@@ -281,7 +277,7 @@ describe('Http.Api.Skus', function () {
             });
 
             it('should process a .tar.gz file with a sku', function() {
-                var skus = helper.injector.get('Http.Api.Skus');
+                var skus = helper.injector.get('Http.Services.SkuPack');
                 var fs = helper.injector.get('fs');
                 var req = fs.createReadStream('spec/lib/services/sku-static/pack.tar.gz');
                 var Promise = helper.injector.get('Promise');
@@ -289,21 +285,19 @@ describe('Http.Api.Skus', function () {
                     _resolve = resolve;
                     _reject = reject;
                 });
-                var res = {
-                    status: function(code) {
-                        if(code === 201) {
-                            _resolve(201);
-                        }
-                        _reject(code);
-                        return res;
-                    },
-                    send: sinon.stub(),
-                    json: function(obj) {
-                        return JSON.stringify(obj);
-                    }
-                };
 
-                skus.skuPackHandler(req, res, 'skuid');
+                req.on('open', function() {
+                    req.headers = {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    };
+                    skus.skuPackHandler(req, {}, 'skuid')
+                    .then(function() {
+                        _resolve(201);
+                    })
+                    .catch(function(err) {
+                        _reject( err );
+                    });
+                });
 
                 return promise.then(function(code) {
                     expect(code).to.equal(201);

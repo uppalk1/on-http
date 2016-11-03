@@ -3,8 +3,6 @@
 
 'use strict';
 
-var ws = require('ws');
-
 describe('Http.Api.Login', function () {
     var server;
     var sandbox = sinon.sandbox.create();
@@ -31,18 +29,20 @@ describe('Http.Api.Login', function () {
     function startServer(endpoint){
         var Server = helper.injector.get('Http.Server');
         server = new Server(endpoint);
-        server.start();
+        return server.start();
     }
 
     function cleanUp(){
-        server.stop();
-        sandbox.restore();
-        restoreConfig();
-
+        return server.stop()
+            .then(function(){
+                sandbox.restore();
+                return restoreConfig();
+            }
+        );
     }
 
     function restoreConfig(){
-        helper.injector.get('Services.Configuration')
+        return helper.injector.get('Services.Configuration')
             .set('authPasswordHash', 'KcBN9YobNV0wdux8h0fKNqi4uoKCgGl/j8c6YGlG7iA' +
                                      '0PB3P9ojbmANGhDlcSBE0iOTIsYsGbtSsbqP4wvsVcw==')
             .set('authPasswordSalt', 'zlxkgxjvcFwm0M8sWaGojh25qNYO8tuNWUMN4xKPH93' +
@@ -53,7 +53,6 @@ describe('Http.Api.Login', function () {
     helper.before(function () {
         return [
             dihelper.simpleWrapper(require('swagger-express-mw'), 'swagger'),
-            dihelper.simpleWrapper(ws.Server, 'WebSocketServer'),
             dihelper.simpleWrapper({}, 'TaskGraph.TaskGraph'),
             dihelper.simpleWrapper({}, 'TaskGraph.Store'),
             dihelper.simpleWrapper({}, 'Task.Services.OBM'),
@@ -77,7 +76,7 @@ describe('Http.Api.Login', function () {
     after('disallow self signed certs', function () {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
     });
-    
+
     var waterline;
     before('setup default admin user', function() {
         waterline = helper.injector.get('Services.Waterline');
@@ -97,7 +96,7 @@ describe('Http.Api.Login', function () {
     describe('test with authentication enabled', function () {
         before('start HTTPs server', function () {
             this.timeout(5000);
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should return a token with correct credential in request body', function() {
@@ -202,7 +201,7 @@ describe('Http.Api.Login', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 
@@ -216,7 +215,7 @@ describe('Http.Api.Login', function () {
                 "authEnabled": true,
                 "routers": "northbound-api-router"
             };
-            startServer(endpointHttp);
+            return startServer(endpointHttp);
         });
 
         //give a shoot on http instead of https.
@@ -241,7 +240,7 @@ describe('Http.Api.Login', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 
@@ -249,7 +248,7 @@ describe('Http.Api.Login', function () {
         before('start HTTPs server', function () {
             this.timeout(5000);
             endpoint.authEnabled = false;
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should fail with auth disabled', function() {
@@ -260,9 +259,11 @@ describe('Http.Api.Login', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
-            //restore endpoint
-            endpoint.authEnabled = true;
+            return cleanUp().then(function(){
+                //restore endpoint
+                endpoint.authEnabled = true;
+                return;
+            });
         });
     });
 
@@ -272,7 +273,7 @@ describe('Http.Api.Login', function () {
             sandbox.stub(localStrategy.prototype, 'authenticate', function() {
                 return this.error('something');
             });
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should fail with auth', function() {
@@ -287,7 +288,7 @@ describe('Http.Api.Login', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 
@@ -297,7 +298,7 @@ describe('Http.Api.Login', function () {
             sandbox.stub(localStrategy.prototype, 'authenticate', function() {
                 return this.fail({message: 'Some other message'});
             });
-            startServer(endpoint);
+            return startServer(endpoint);
         });
 
         it('should fail with auth', function() {
@@ -312,8 +313,7 @@ describe('Http.Api.Login', function () {
         });
 
         after('stop server, restore mock and configure',function () {
-            cleanUp();
+            return cleanUp();
         });
     });
 });
-

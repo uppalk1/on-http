@@ -24,7 +24,7 @@ describe('Redfish Roles', function () {
     });
 
     it('should return valid roles', function () {
-        return helper.request().get('/redfish/v1/Roles')
+        return helper.request().get('/redfish/v1/AccountService/Roles')
             .expect('Content-Type', /^application\/json/)
             .expect(200)
             .expect(function(res) {
@@ -33,8 +33,8 @@ describe('Redfish Roles', function () {
             });
     });
 
-    it('should returnthe roles of  ReadOnly ', function () {
-        return helper.request().get('/redfish/v1/Roles/ReadOnly')
+    it('should return the roles of  ReadOnly ', function () {
+        return helper.request().get('/redfish/v1/AccountService/Roles/ReadOnly')
             .expect('Content-Type', /^application\/json/)
             .expect(200)
             .expect(function(res) {
@@ -44,4 +44,11 @@ describe('Redfish Roles', function () {
                     .to.equal("Login" );
             });
     });
+
+    it('should 404 an invalid role', function () {
+        return helper.request().get('/redfish/v1/AccountService/Roles/invalid')
+            .expect('Content-Type', /^application\/json/)
+            .expect(404);
+    });
+
 });

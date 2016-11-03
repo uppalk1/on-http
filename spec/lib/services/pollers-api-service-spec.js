@@ -34,7 +34,7 @@ describe("Http.Services.Api.Pollers", function () {
     describe("getPollers", function() {
         it("should expose the appropriate methods", function() {
             pollerService.should.have.property("getPollers")
-                .that.is.a("function").with.length(1);
+                .that.is.a("function").with.length(2);
         });
 
         it("Run getPollers", function() {
@@ -52,7 +52,7 @@ describe("Http.Services.Api.Pollers", function () {
         it('should return error if poller informations is not found', function () {
             var mockPollerError = new Errors.NotFoundError("Could not find workitem with identifier");
             waterline.workitems.find.rejects(mockPollerError);
-            return pollerService.getPollers().should.eventually.be.rejectedWith(mockPollerError);
+            return pollerService.getPollers().should.be.rejectedWith(mockPollerError);
         });
 
     });
@@ -88,7 +88,7 @@ describe("Http.Services.Api.Pollers", function () {
         it("should return error if specific poller info is not found", function () {
             var mockPollerError = new Errors.NotFoundError("Could not find workitem with identifier");
             waterline.workitems.needByIdentifier.rejects(mockPollerError);
-            return pollerService.getPollersById().should.eventually.be.rejectedWith(mockPollerError);
+            return pollerService.getPollersById().should.be.rejectedWith(mockPollerError);
         });
 
     });
@@ -130,7 +130,7 @@ describe("Http.Services.Api.Pollers", function () {
         it("Throws error when  postPollers runs with invalid input", function() {
             var mockPollerError = new Errors.ValidationError("Validation errors");
             waterline.workitems.create.rejects(mockPollerError);
-            return pollerService.postPollers().should.eventually.be.rejectedWith(mockPollerError);
+            return pollerService.postPollers().should.be.rejectedWith(mockPollerError);
         });
     });
 
@@ -213,7 +213,7 @@ describe("Http.Services.Api.Pollers", function () {
     describe("getPollersByIdData", function() {
         it("should expose the appropriate methods", function() {
             pollerService.should.have.property("getPollersByIdData")
-            .that.is.a("function").with.length(1);
+            .that.is.a("function").with.length(2);
         });
 
         it("Run getPollersByIdData", function() {
@@ -223,31 +223,10 @@ describe("Http.Services.Api.Pollers", function () {
                 config: {}
             }];
 
-
+            waterline.workitems.needByIdentifier.resolves();
             taskProtocol.requestPollerCache.resolves(mockPoller);
 
             return pollerService.getPollersByIdData().then(function (pollers) {
-                expect(pollers).to.deep.equal(mockPoller);
-            });
-        });
-    });
-
-
-    describe("getPollersByIdDataCurrent", function() {
-        it("should expose the appropriate methods", function() {
-            pollerService.should.have.property("getPollersByIdDataCurrent")
-            .that.is.a("function").with.length(1);
-        });
-
-        it("Run getPollersByIdDataCurrent", function() {
-            var mockPoller = [{
-                id: "1234",
-                name: "Pollers.IPMI",
-                config: {}
-            }];
-
-            taskProtocol.requestPollerCache.resolves(mockPoller);
-            return pollerService.getPollersByIdDataCurrent().then(function (pollers) {
                 expect(pollers).to.deep.equal(mockPoller);
             });
         });

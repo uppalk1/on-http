@@ -3,7 +3,7 @@
 
 'use strict';
 
-describe('Http.Api.Catalogs', function () {
+describe('2.0 Http.Api.Catalogs', function () {
 
     var Promise;
     var Errors;
@@ -21,13 +21,19 @@ describe('Http.Api.Catalogs', function () {
         });
     });
 
-    after('stop HTTP server', function () {
-        return helper.stopServer();
+    beforeEach('loading views', function(){
+        return helper.injector.get('Views').load();
     });
 
-    beforeEach("reset stubs", function() {
+    afterEach("reset stubs", function() {
         stubFind.reset();
         stubNeedByIdentifier.reset();
+    });
+
+    after('stop HTTP server', function () {
+        stubFind.restore();
+        stubNeedByIdentifier.restore();
+        return helper.stopServer();
     });
 
     describe("GET /catalogs", function() {
@@ -99,7 +105,7 @@ describe('Http.Api.Catalogs', function () {
                 .expect('Content-Type', /^application\/json/)
                 .expect(200)
                 .expect(function (res) {
-                    expect(res.body).to.have.property("node", "123");
+                    expect(res.body).to.have.property("node", "/api/2.0/nodes/123");
                     expect(stubNeedByIdentifier.calledWith('123')).to.equal(true);
                     expect(res.body).to.be.an("Object").with.property('id', "123");
                 });

@@ -26,14 +26,44 @@ authconfig --enableshadow --passalgo=sha512 --enablefingerprint
 rootpw --iscrypted <%=rootEncryptedPassword%>
 
 #create all users
+<% if (typeof users !== 'undefined') { %>
 <% users.forEach(function(user) { %>
-    user --name=<%=user.name%> --uid=<%=user.uid%> --iscrypted --password <%=user.encryptedPassword%>
-<% }) %>
+<%_  if( typeof user.uid !== 'undefined' ) { _%>
+        user --name=<%=user.name%> --uid=<%=user.uid%> --iscrypted --password <%=user.encryptedPassword%>
+<%_  } else { _%>
+        user --name=<%=user.name%>  --iscrypted --password <%=user.encryptedPassword%>
+<%_ }}) _%>
+<% } %>
 
 # Disk Partitioning
 zerombr
 clearpart --all --drives=<%=installDisk%>
-autopart
+
+<% if (typeof installPartitions !== 'undefined' && installPartitions.length > 0) { %>
+    <% installPartitions.forEach(function(partition) { %>
+        # mountPoint and size is required
+        <% if(partition.mountPoint !== undefined && partition.size !== undefined) { %>
+            <% if(partition.fsType !== undefined) { %>
+                <% if(partition.size === 'auto') { %>
+                    partition <%=partition.mountPoint%> --size=250 --grow --fstype=<%=partition.fsType%>
+                <% } else { %>
+                    partition <%=partition.mountPoint%> --size=<%=partition.size%> --fstype=<%=partition.fsType%>
+                <% } %>
+            <% } else { %>
+                # fsType is optional
+                <% if(partition.size === 'auto') { %>
+                    partition <%=partition.mountPoint%> --size=250 --grow
+                <% } else { %>
+                    partition <%=partition.mountPoint%> --size=<%=partition.size%>
+                <% } %>
+            <% } %>
+        <% } %>
+    <% }) %>
+<% } else { %>
+    # auto partitioning if no partitions are specified
+    autopart
+<% } %>
+
 # END of Disk Partitioning
 
 # Make sure we reboot into the new system when we are finished
@@ -47,13 +77,12 @@ reboot
 -fcoe*
 -b43-openfwwf
 kernel-firmware
--efibootmgr
 wget
 sudo
 perl
 libselinux-python
 net-tools
-<% if( typeof kvm !== 'undefined' ) { %>
+<% if( typeof kvm !== 'undefined' && kvm ) { %>
     <% if (version === "6.5") { %>
         kvm
         virt-manager
@@ -84,6 +113,7 @@ export PATH
     echo <%=rootSshKey%> > /root/.ssh/authorized_keys
     chown -R root:root /root/.ssh
 <% } %>
+<% if (typeof users !== 'undefined') { %>
 <% users.forEach(function(user) { %>
     <% if (typeof user.sshKey !== 'undefined') { %>
         mkdir /home/<%=user.name%>/.ssh
@@ -91,58 +121,79 @@ export PATH
         chown -R <%=user.name%>:<%=user.name%> /home/<%=user.name%>/.ssh
     <% } %>
 <% }) %>
+<% } %>
 
 #set hostname
-echo <%=hostname%> > /etc/hostname
-echo -e "NETWORKING=yes\nHOSTNAME=<%=hostname%>.<%=domain%>" > /etc/sysconfig/network
+<% if (typeof hostname !== 'undefined') { %>
+    echo <%=hostname%> > /etc/hostname
+    <% if (typeof domain !== 'undefined') { %>
+        echo -e "NETWORKING=yes\nHOSTNAME=<%=hostname%>.<%=domain%>" > /etc/sysconfig/network
+    <% } %>
+<% } %>
 
 # Setup static network configuration
-<% if( undefined !== networkDevices ) { %>
+<%_ var macRegex = /(..:*){6}/i; _%>
+<% if (typeof networkDevices !== 'undefined') { %>
   <% ipv6 = 0 %>
   <% networkDevices.forEach(function(n) { %>
+    interface=<%=n.device%>
+    <%_ if (n.device.search(macRegex) === 0){ _%>
+      interface=`grep -i /sys/class/net/*/address -e  $interface | cut -d "/" -f 5`
+    <%_ } _%>
     <% if( undefined != n.ipv4 ) { %>
-      <% if( undefined != n.ipv4.vlanId ) { %>
-        <% n.ipv4.vlanId.forEach(function(vid) { %>
-          echo "Configuring vlan <%=vid%> on <%=n.device%>"
-          echo "DEVICE=<%=n.device%>.<%=vid%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "IPADDR=<%=n.ipv4.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "NETMASK=<%=n.ipv4.netmask%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "GATEWAY=<%=n.ipv4.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "VLAN=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
+      <% if( undefined != n.ipv4.vlanIds ) { %>
+        <% n.ipv4.vlanIds.forEach(function(vid) { %>
+          echo "Configuring vlan <%=vid%> on $interface"
+          sed -i '/^BOOTPROTO=/d' /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          sed -i '/^ONBOOT=/d' /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "DEVICE=$interface.<%=vid%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "IPADDR=<%=n.ipv4.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "NETMASK=<%=n.ipv4.netmask%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "GATEWAY=<%=n.ipv4.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "VLAN=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
         <% }); %>
       <% } else { %>
-        echo "Configuring device <%=n.device%>"
-        echo "DEVICE=<%=n.device%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "IPADDR=<%=n.ipv4.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "NETMASK=<%=n.ipv4.netmask%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "GATEWAY=<%=n.ipv4.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
+        echo "Configuring device $interface"
+        sed -i '/^BOOTPROTO=/d' /etc/sysconfig/network-scripts/ifcfg-$interface
+        sed -i '/^ONBOOT=/d' /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "DEVICE=$interface" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        <%_ if (n.device.search(macRegex) === 0){ _%>
+            echo "HWADDR=<%=n.device%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        <%_ } _%>
+        echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "IPADDR=<%=n.ipv4.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "NETMASK=<%=n.ipv4.netmask%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "GATEWAY=<%=n.ipv4.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface
       <% } %>
     <% } %>
     <% if( undefined != n.ipv6 ) { %>
-      <% if( undefined != n.ipv6.vlanId ) { %>
-        <% n.ipv6.vlanId.forEach(function(vid) { %>
-          echo "Configuring vlan <%=vid%> on <%=n.device%>"
-          echo "DEVICE=<%=n.device%>.<%=vid%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "IPV6INIT=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "IPV6ADDR=<%=n.ipv6.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "IPV6_DEFAULTGW=<%=n.ipv6.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
-          echo "VLAN=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>.<%=vid%>
+      <% if( undefined != n.ipv6.vlanIds ) { %>
+        <% n.ipv6.vlanIds.forEach(function(vid) { %>
+          echo "Configuring vlan <%=vid%> on $interface"
+          sed -i '/^BOOTPROTO=/d' /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          sed -i '/^ONBOOT=/d' /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "DEVICE=$interface.<%=vid%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "IPV6INIT=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "IPV6ADDR=<%=n.ipv6.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "IPV6_DEFAULTGW=<%=n.ipv6.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
+          echo "VLAN=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface.<%=vid%>
           <% ipv6 = 1 %>
         <% }); %>
       <% } else { %>
-        echo "Configuring device <%=n.device%>"
-        echo "DEVICE=<%=n.device%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "IPV6INIT=yes" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "IPV6ADDR=<%=n.ipv6.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
-        echo "IPV6_DEFAULTGW=<%=n.ipv6.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-<%=n.device%>
+        echo "Configuring device $interface"
+        sed -i '/^BOOTPROTO=/d' /etc/sysconfig/network-scripts/ifcfg-$interface
+        sed -i '/^ONBOOT=/d' /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "DEVICE=$interface" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "BOOTPROTO=none" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "ONBOOT=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "IPV6INIT=yes" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "IPV6ADDR=<%=n.ipv6.ipAddr%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface
+        echo "IPV6_DEFAULTGW=<%=n.ipv6.gateway%>" >> /etc/sysconfig/network-scripts/ifcfg-$interface
         <% ipv6 = 1 %>
       <% } %>
     <% } %>
@@ -153,17 +204,25 @@ echo -e "NETWORKING=yes\nHOSTNAME=<%=hostname%>.<%=domain%>" > /etc/sysconfig/ne
 <% } %>
 
 # Setup DNS servers
-<% if( undefined !== dnsServers ) { %>
-  echo "search <%=domain%>" > /etc/resolv.conf
+<% if (typeof dnsServers !== 'undefined') { %>
+  <% if (typeof domain !== 'undefined') { %>
+    echo "search <%=domain%>" > /etc/resolv.conf
+  <% } %>
   <% dnsServers.forEach(function(dns) { %>
     echo "nameserver <%=dns%>" >> /etc/resolv.conf
   <% }) %>
   chattr +i /etc/resolv.conf
 <% } %>
 
-#signify ORA the installation completed
-/usr/bin/wget --spider http://<%=server%>:<%=port%>/api/common/templates/renasar-ansible.pub
+# Download the service to callback to RackHD after OS installation/reboot completion
+/usr/bin/wget http://<%=server%>:<%=port%>/api/current/templates/<%=rackhdCallbackScript%> -O /etc/rc.d/init.d/<%=rackhdCallbackScript%>
+chmod +x /etc/rc.d/init.d/<%=rackhdCallbackScript%>
+# Enable the above service, it should auto-disable after running once
+chkconfig <%=rackhdCallbackScript%> on
 
-) 2>&1 >/root/install-post-sh.log
+#signify ORA the installation completed
+/usr/bin/curl -X POST -H 'Content-Type:application/json' http://<%=server%>:<%=port%>/api/current/notification?nodeId=<%=nodeId%>
+
+) 2>&1 >>/root/install-post-sh.log
 EOF
 %end

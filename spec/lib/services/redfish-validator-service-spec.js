@@ -6,8 +6,9 @@ require('../../helper');
 
 describe("Redfish Validator Service", function() {
     var redfish;
-    var template;
+    var view;
     var _;
+    var env;
     var testObj = {
         '@odata.context': '/redfish/v1/$metadata#Systems',
         '@odata.id': '/redfish/v1/Systems/',
@@ -26,21 +27,26 @@ describe("Redfish Validator Service", function() {
         helper.setupInjector([
             helper.require("/lib/services/schema-api-service"),
             helper.require("/lib/services/redfish-validator-service"),
+            helper.require("/lib/api/view/view"),
             dihelper.simpleWrapper(function() { arguments[1](); }, 'rimraf')
         ]);
         redfish = helper.injector.get('Http.Api.Services.Redfish');
-        template = helper.injector.get('Templates');
+        view = helper.injector.get('Views');
         _ = helper.injector.get('_');
 
-        sinon.stub(template, "get").resolves({contents: JSON.stringify(testObj)});
+        env = helper.injector.get('Services.Environment');
+        sinon.stub(env, "get").resolves();
+
+        sinon.stub(view, "get").resolves({contents: JSON.stringify(testObj)});
     });
 
     beforeEach(function() {
-        template.get.reset();
+        view.get.reset();
     });
 
     helper.after(function () {
-        template.get.restore();
+        view.get.restore();
+        env.get.restore();
     });
 
     it('should get and render without validation', function() {

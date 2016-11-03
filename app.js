@@ -14,10 +14,12 @@ di.annotate(Runner, new di.Inject(
         'Services.Configuration',
         'Profiles',
         'Templates',
+        'Views',
         'fileService',
         'Promise',
         'Http.Services.SkuPack',
-        'Acl.Services'
+        'Http.Services.Api.Account',
+        'Http.Services.uPnP'
     )
 );
 function Runner(
@@ -26,17 +28,19 @@ function Runner(
     configuration,
     profiles,
     templates,
+    views,
     fileService,
     Promise,
     skuPack,
-    aclService
+    accountService,
+    uPnPService
 ) {
     var services = [];
 
     function start() {
         return core.start()
             .then(function() {
-                return Promise.all([profiles.load(), templates.load()]);
+                return Promise.all([profiles.load(), templates.load(), views.load()]);
             })
             .then(function() {
                 return fileService.start({
@@ -50,7 +54,12 @@ function Runner(
                 return skuPack.start(configuration.get('skuPackRoot', './skupack.d'));
             })
             .then(function() {
-                return aclService.start();
+                return accountService.start();
+            })
+            .then(function() {
+                if(configuration.get('enableUPnP', true)) {
+                    return uPnPService.start();
+                }
             })
             .then(function() {
                 var endpoints = configuration.get('httpEndpoints', [{port: 8080}]);

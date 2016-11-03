@@ -18,7 +18,10 @@ describe('Http.Api.Tasks', function () {
         taskProtocol = helper.injector.get('Protocol.Task');
         // Defaults, you can tack on .resolves().rejects().resolves(), etc. like so
         taskProtocol.activeTaskExists = sinon.stub().resolves();
-        taskProtocol.requestCommands = sinon.stub().resolves({ testcommands: 'cmd' });
+        taskProtocol.requestCommands = sinon.stub().resolves({
+                                                            "identifier":"1234", 
+                                                            "tasks": [ {"cmd": "testfoo"}
+                                                             ]});
         taskProtocol.respondCommands = sinon.stub();
 
         tasksApiService = helper.injector.get('Http.Services.Api.Tasks');
@@ -29,11 +32,31 @@ describe('Http.Api.Tasks', function () {
 
         templates = helper.injector.get('Templates');
 
-        return helper.reset();
+        return helper.reset().then(function(){
+          return helper.injector.get('Views').load();
+          });
+    });
+
+    afterEach('restoring stubs', function() {
+        function resetStubs(obj) {
+            _(obj).methods().forEach(function (method) {
+                if (obj[method] && obj[method].reset) {
+                    obj[method].reset();
+                }
+            }).value();
+        }
+
+        resetStubs(taskProtocol.activeTaskExists);
+        resetStubs(taskProtocol.requestCommands);
+        resetStubs(taskProtocol.respondCommands);
+        resetStubs(tasksApiService.getNode);
+        resetStubs(lookupService.ipAddressToMacAddress);
     });
 
     after('stop HTTP server', function () {
-        return helper.stopServer();
+        return helper.reset().then(function(){
+            return helper.stopServer();
+        });
     });
 
     describe('GET /tasks/:id', function () {
@@ -42,7 +65,10 @@ describe('Http.Api.Tasks', function () {
             return helper.request().get('/api/2.0/tasks/testnodeid')
             .expect(200)
             .expect(function (res) {
-                expect(res.body).to.deep.equal({ testcommands: 'cmd' });
+                expect(res.body).to.deep.equal({
+                                               "identifier":"1234",
+                                               "tasks": [ {"cmd": "testfoo"}
+                                               ]});
             });
         });
 
@@ -61,8 +87,6 @@ describe('Http.Api.Tasks', function () {
             return helper.request().get('/api/2.0/tasks/testnodeid')
             .expect(404);
         });
-
-
     });
 
     describe("GET /tasks/bootstrap.js", function() {
@@ -96,11 +120,11 @@ describe('Http.Api.Tasks', function () {
                 .expect(404);
         });
 
-        it("should render a 500 if tasksApiService.getNode errors", function() {
+        it("should render a 400 if tasksApiService.getNode errors", function() {
             tasksApiService.getNode.rejects(new Error('asdf'));
             return helper.request()
                 .get('/api/2.0/tasks/bootstrap.js?macAddress=00:11:22:33:44:55')
-                .expect(500);
+                .expect(400);
         });
     });
 
@@ -114,7 +138,7 @@ describe('Http.Api.Tasks', function () {
                 return x;
             }
 
-            var data = { foo: createBigString() };
+            var data = {"identifier": createBigString(),"tasks": [{"cmd": "testfoo"}]};
 
             return helper.request().post('/api/2.0/tasks/123')
             .send(data)

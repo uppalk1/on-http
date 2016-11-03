@@ -1,2336 +1,4230 @@
-swagger: "2.0"
-info:
-  version: "0.0.1"
-  title: RackHD 2.0
-# during dev, should point to your local machine
-#host: localhost:10010
-# basePath prefixes all resource paths
 basePath: /api/2.0
-#
-schemes:
-  # tip: remove http to make production-grade
-  - http
-  - https
-# format of bodies a client can send (Content-Type)
 consumes:
-  - application/json
-# format of the responses to the client (Accepts)
-produces:
-  - application/json
-tags:
-  - name: "/api/2.0"
-    description: RackHD 2.0 API
-paths:
-  /versions:
-    x-swagger-router-controller: versions
-    get:
-      description: Returns installed versions to the caller
-      # used as the method name of the controller
-      operationId: getVersions
-      tags: [ "/api/2.0" ]
-      responses:
-        "200":
-          description: Success
-          schema:
-            # a pointer to a definition
-            $ref: "#/definitions/VersionsResponse"
-        # responses may fall through to errors
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-
-  /pollers/library:
-    x-swagger-router-controller: pollers
-    get:
-      operationId: pollersLibGet
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of possible library pollers
-      description: |
-        get list of possible library pollers
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            list of all pollers
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /pollers/library/{identifier}:
-    x-swagger-router-controller: pollers
-    get:
-      operationId: pollersLibByIdGet
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get a single library poller
-      description: |
-        get a single library poller
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            library poller identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            single library poller
-          schema:
-            type: object
-        404:
-          description: |
-            There is no library poller with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /pollers:
-    x-swagger-router-controller: pollers
-    get:
-      x-swagger-serializer: pollers
-      operationId: pollersGet
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of all pollers
-      description: |
-        get list of all pollers
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            list of all pollers
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      x-swagger-deserializer: pollers
-      operationId: pollersPost
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        create a poller
-      description: |
-        create a poller
-      parameters:
-      - name: content
-        in: body
-        description: foo
-        required: true
-        schema:
-         $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            poller created
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /pollers/{identifier}:
-    x-swagger-router-controller: pollers
-    get:
-      x-swagger-serializer: pollers
-      operationId: pollersIdGet
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Get specifics of the specified poller
-      description: |
-        Get specifics of the specified poller
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            poller identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Specifics of the specified poller
-          schema:
-            type: object
-        404:
-          description: |
-            There is no  poller with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    patch:
-      x-swagger-deserializer: pollers
-      operationId: pollersPatch
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        patch specifics of the specified poller
-      description: |
-        patch specifics of the specified poller
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            poller identifier
-          required: true
-          type: string
-        - name: content
-          in: body
-          description: foo
-          required: true
-          schema:
-            $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Specifics of the patched poller
-          schema:
-            type: object
-        404:
-          description: |
-            There is no poller with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      operationId: pollersDelete
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        delete the specified poller
-      description: |
-        delete the specified poller
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            poller identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        204:
-          description: |
-            Poller delete successfully
-        404:
-          description: |
-            There is no poller with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /pollers/{identifier}/data:
-    x-swagger-router-controller: pollers
-    get:
-      operationId: pollersDataGet
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Get data for the specific poller
-      description: |
-        Get data for the specific poller
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            identifier (ip address or NodeId) for the data from a poller
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            data for poller
-          schema:
-            type: object
-        404:
-          description: |
-            There is no poller with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /pollers/{identifier}/data/current:
-    x-swagger-router-controller: pollers
-    get:
-      operationId: pollersCurrentDataGet
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Get latest data for the specific poller
-      description: |
-        Get latest data for the specific poller
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            identifier (ip address or NodeId) for the data from a poller
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            data for poller
-          schema:
-            type: object
-        404:
-          description: |
-            There is no poller with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /templates/library:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of possible templates
-      description: |
-        get list of possible templates
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            list of possible templates
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /templates/library/{identifier}:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get a single template
-      description: |
-        get a single template
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            template identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            single template
-          schema:
-            type: object
-        404:
-          description: |
-            There is no template with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        put a single template
-      description: |
-        put a single template
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            objectid of template
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            return template
-          schema:
-            type: object
-        404:
-          description: |
-            There is no template with specified identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /skus:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of skus
-      description: |
-        get list of skus
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-             list of skus
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        create a sku
-      description: |
-        create a sku
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            sku to create
-          schema:
-            type: object
-        500:
-          description: |
-            Upload failed.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /skus/{identifier}:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get a single sku
-      description: |
-        get a single sku
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            objectid of sku
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            return sku
-          schema:
-            type: object
-        404:
-          description: |
-            There is no sku with identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    patch:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        patch a single sku
-      description: |
-        patch a single sku
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            The profile name.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            sku to patch
-          schema:
-            type: object
-        404:
-          description: |
-            Not found, no sku with identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: |
-            Patch failed.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Delete specific sku.
-      description: |
-        Delete specific sku.
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            The sku objectid.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        204:
-          description: |
-            return all skus
-          schema:
-            type: object
-        404:
-          description: |
-            sku with identifier not found, failed.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /skus/{identifier}/nodes:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get nodes for specific sku
-      description: |
-        get nodes for specific sku
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            The profile name.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            return nodes associated with that sku
-          schema:
-            type: object
-        404:
-          description: |
-            There is no sku with identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /profiles/library:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of possible profiles
-      description: |
-        get list of possible profiles
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            list of possible profiles
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /profiles/library/{identifier}:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get a single profile
-      description: |
-        get a single profile
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            The profile name.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            return profile
-          schema:
-            type: object
-        404:
-          description: |
-            There is no profile in the library with identifier.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        put a single profile
-      description: |
-        put a single profile
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            The profile name.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            profile to put
-          schema:
-            type: object
-        500:
-          description: |
-            Upload failed.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /obms/library:
-    x-swagger-router-controller: obms
-    get:
-      x-swagger-serializer: obms
-      operationId: getObmLib
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of possible OBM services
-      description: |
-        get list of possible OBM services
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            get list of possible OBM services
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /obms/library/{identifier}:
-    x-swagger-router-controller: obms
-    get:
-      x-swagger-serializer: obms
-      operationId: getObmLibById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get a single OBM service
-      description: |
-        get a single OBM service
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            The obm service name.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            return OBM service
-          schema:
-            type: object
-        404:
-          description: |
-            The obm service with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /workflows/library:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        List all workflows available to run
-      description: |
-        List all workflows available to run
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            List all workflows available to run
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /workflows/tasks:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch tasks from task library
-      description: |
-        Fetch tasks from task library
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Fetch tasks from task library
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Add tasks to task library
-      description: |
-        Add tasks to task library
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Add tasks to task library
-          schema:
-            type: object
-        500:
-          description: |
-            Error problem was encountered, task was not written.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Upload failed
-          schema:
-            $ref: '#/definitions/Error'
-  /workflows:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch workflows
-      description: |
-        Fetch workflows
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Fetch workflows
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        define new workflow
-      description: |
-        define new workflow
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Fetch workflows
-          schema:
-            type: object
-        500:
-          description: |
-            Error problem was encountered, workflow was not written.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Upload failed
-          schema:
-            $ref: '#/definitions/Error'
-
-  /nodes/{identifier}/workflows/active:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: nodesGetActiveWorkflowById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch currently running workflows for specified node
-      description: |
-        Fetch currently running workflows for specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Fetch currently running workflows for specified node
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      operationId: nodesDelActiveWorkflowById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Cancel currently running workflows for specified node
-      description: |
-        Cancel currently running workflows for specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            Canceled workflows for specified node
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /nodes/{identifier}/workflows:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: nodesGetWorkflowById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch all workflows for specified node
-      description: |
-        Fetch all workflows for specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            all workflows for specified node, empty object if none exist.
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      operationId: nodesPostWorkflowById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        create workflow for specified node
-      description: |
-        create workflow for specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-        - name: body
-          in: body
-          description: Workflow name
-          required: false
-          schema:
-            $ref: '#/definitions/generic_obj'
-        - name: name
-          in: query
-          description: Workflow name
-          required: false
-          type: string
-# The OpenAPI Specification 2.0 does not allow type:object for a parameter in a query.  We will use the express req.query to decode
-#        - name: options
-#          in: query
-#          description: options
-#          required: false
-#          type: object
-
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            the workflow that was created
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-
-  /nodes/{identifier}/pollers:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: nodesGetPollersById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch all pollers for specified node
-      description: |
-        Fetch all pollers for specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            all pollers of specified node, empty object if none exist.
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /nodes/{identifier}/catalogs/{source}:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: nodesGetCatalogSourceById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch catalog of specified node for given source
-      description: |
-        Fetch catalog of specified node for given source
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-        - name: source
-          in: path
-          description: |
-            Source catalog name to fetch
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            specific source catalog of specified node, |
-            empty object if none exist.
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /nodes/{identifier}/catalogs:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: nodesGetCatalogById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch catalog of specified node
-      description: |
-        Fetch catalog of specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            all catalogs of specified node, empty object if none exist.
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /nodes/{identifier}/obm/identify:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Fetch status of identify light on node through OBM (if supported)
-      description: |
-        Fetch status of identify light on node through OBM (if supported)
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: obm identity light settings
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found or has no obm settings.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      operationId: nodesPostObmIdById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Enable or disable identify light on node through OBM (if supported)
-      description: |
-        Enable or disable identify light on node through OBM (if supported)
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-        - name: content
-          in: body
-          description: foo
-          required: true
-          schema:
-            $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        201:
-          description: obm settings accepted
-        404:
-          description: |
-            The node with the identifier was not found or has no obm settings.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /nodes/{identifier}/obm:
-    x-swagger-router-controller: nodes
-    get:
-      x-swagger-serializer: nodes
-      # swagger template and schema names (not sure how to get schema in fitting)...
-      operationId: nodesGetObmById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get the obm settings associated with a node.
-      description: |
-        get the obm settings associated with a node.
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: obm settings
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found or has no obm settings.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      x-swagger-deserializer: nodes
-      # swagger template and schema names (not sure how to get schema in fitting)...
-      operationId: nodesPostObmById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        set the obm settings associated with a node.
-      description: |
-        set he obm settings associated with a node.
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-        - name: body
-          in: body
-          description: |
-            obm settings to apply.
-          required: true
-          schema:
-            $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        201:
-          description: obm settings accepted
-        404:
-          description: |
-            The node with the identifier was not found or has no obm settings.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /nodes/{identifier}:
-    x-swagger-router-controller: nodes
-    get:
-      x-swagger-serializer: nodes
-      # swagger template and schema names (not sure how to get schema in fitting)...
-      operationId: nodesGetById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        List of all nodes or if there are none an empty object
-      description: |
-        List of all nodes or if there are none an empty object
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: array of all
-          schema:
-            type: array
-            items:
-              type: object
-        404:
-          description: The node with the identifier was not found.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      operationId: nodesDelById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Delete specified node.
-      description: |
-        Delete specified node.
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: Delete successful
-        404:
-          description: The node with the identifier was not found.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    patch:
-      x-swagger-deserializer: nodes
-      # swagger template and schema names (not sure how to get schema in fitting)...
-      operationId: nodesPatchById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Patch specified node
-      description: |
-        Patch specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses and unique aliases to identify the node by, |
-            expect a string or an array of strings.
-          required: true
-          type: string
-        - name: body
-          in: body
-          description: |
-            object patches to apply.
-          required: true
-          schema:
-           $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: patch succeeded
-          schema:
-            type: object
-        404:
-          description: Not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /nodes/{identifier}/tags:
-    x-swagger-router-controller: nodes
-    get:
-      operationId: nodesGetTagsById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        List of all tags on the node or an empty object if there are none
-      description: |
-        List of all tags on the node or an empty object if there are none
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses or unique aliases to identify the node by
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: array of all
-          schema:
-            type: array
-            items:
-              type: object
-        404:
-          description: The node with the identifier was not found.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    patch:
-      operationId: nodesPatchTagById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Patch tags onto specified node
-      description: |
-        Patch tags onto specified node
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses or unique aliases to identify the node by
-          required: true
-          type: string
-        - name: body
-          in: body
-          description: |
-            object patches to apply.
-          required: true
-          schema:
-            $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: patch succeeded
-          schema:
-            type: object
-        404:
-          description: Not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /nodes/{identifier}/tags/{tagName}:
-    x-swagger-router-controller: nodes
-    delete:
-      operationId: nodesDelTagById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        Delete a tag from the specified node.
-      description: |
-        Delete a tag from the specified node.
-      parameters:
-        - name: identifier
-          in: path
-          description: |
-            Mac addresses or unique aliases to identify the node by
-          required: true
-          type: string
-        - name: tagName
-          in: path
-          description: The name of the tag
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        204:
-          description: Delete successful
-        404:
-          description: The node with the identifier was not found.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /nodes:
-    x-swagger-router-controller: nodes
-    get:
-      x-swagger-serializer: nodes
-      operationId: nodesGetAll
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        List of all nodes or if there are none an empty object
-      description: |
-        List of all nodes or if there are none an empty object
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: array of all
-          schema:
-            type: array
-            items:
-              type: object
-        400:
-          description: invalidAttributes - 1 attribute is invalid
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      x-swagger-deserializer: nodes
-      # swagger template and schema names (not sure how to get schema in fitting)...
-      operationId: nodesPost
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        post
-      description: |
-        post
-      parameters:
-      - name: identifiers
-        in: body
-        description: |
-          Mac addresses and unique aliases to identify the node by, |
-          expect a string or an array of strings.
-        required: true
-        schema:
-         $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        201:
-          description: waterline response
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /lookups:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        find all
-      description: |
-        find all
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: array of all
-          schema:
-            type: array
-            items:
-              type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        find all
-      description: |
-        put all
-      parameters:
-      - name: content
-        in: body
-        description: foo
-        required: true
-        schema:
-         $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: waterline response
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /lookups/{id}:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        lookup id
-      description: |
-        lookup id
-      parameters:
-        - name: id
-          in: path
-          description: id of thing to lookup
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: array of all
-          schema:
-            type: array
-            items:
-              type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        post id
-      description: |
-        post id
-      parameters:
-      - name: id
-        in: path
-        description: id of thing to lookup
-        required: true
-        type: string
-      - name: content
-        in: body
-        description: foo
-        required: true
-        schema:
-         $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: waterline response
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /files/{fileidentifier}:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get file based on uuid
-      description: |
-        Get file based on uuid.
-      parameters:
-        - name: fileidentifier
-          in: path
-          description: uuid of a file as provided when you originally stored it.
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-# https://github.com/swagger-api/swagger-spec/issues/260 means we can't
-# describe the return of a file easily today until jsonspec and swagger
-# are "fixed"
-        200:
-          description: The file requested
-          schema:
-            type: object
-        404:
-          description: File not found.
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Failed to serve file request.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        put file based on filename
-      description: |
-        Put file based on filename, returns the uuid of the stored file.
-      parameters:
-        - name: fileidentifier
-          in: path
-          description: filename of the file you want to store
-          required: true
-          type: string
-# https://github.com/swagger-api/swagger-spec/issues/326 does not yet accept files
-#       - name: content
-#          in: body
-#          description: the attachment content
-#          required: true
-#          schema:
-#            type: file
-#      consumes:
-#        - application/octet-stream
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: The file was stored
-          schema:
-            type: object
-        201:
-          description: Ready.
-          schema:
-            type: string
-        500:
-          description: Failure serving file request.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        delete file based on uuid
-      description: |
-        Put file based on filename, returns the uuid of the stored file.
-      parameters:
-        - name: fileidentifier
-          in: path
-          description: filename identifier of the file you wish to delete
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        204:
-          description: File successfully deleted.
-        404:
-          description: File not found.
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Error deleting file from the database.
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /config:
-    x-swagger-router-controller: config
-    get:
-      operationId: getConfig
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get server configuration
-      description: |
-        Get server configuration.
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: An array of configuration objects
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    patch:
-      operationId: patchConfig
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        patch/update server configuration
-      description: |
-        Patch/update server configuration and then return the patched configuration.
-      tags: [ "/api/2.0" ]
-      consumes:
-        - application/json
-      parameters:
-        - name: config
-          in: body
-          description: Updated config fields
-          required: true
-          schema:
-            $ref: '#/definitions/generic_obj'
-      responses:
-        200:
-          description: An array of configuration objects
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /catalogs:
-    x-swagger-router-controller: catalogs
-    get:
-      operationId: getCatalog
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of all catalogs
-      description: |
-        The catalogs endpoint returns json data that represent the catalogs of
-        all hardware in the system.
-      parameters:
-        - name: query
-          in: query
-          description: query object to pass through to waterline.
-          required: false
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        "200":
-          description: Success
-          schema:
-            # a pointer to a definition
-            $ref: "#/definitions/VersionsResponse"
-        # responses may fall through to errors
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /catalogs/{identifier}:
-    x-swagger-router-controller: catalogs
-    get:
-      operationId: getCatalogById
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get list of all catalogs
-      description: |
-        The catalogs endpoint returns json data that represent the catalogs of
-        all hardware in the system.
-      parameters:
-        - name: identifier
-          in: path
-          description: identifier of a catalog
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        "200":
-          description: Success
-          schema:
-            # a pointer to a definition
-            $ref: "#/definitions/VersionsResponse"
-        # responses may fall through to errors
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /dhcp:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        get DHCP lease table
-      description: |
-        Fetch the dhcp leases.
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            A list of all DHCP leases registered with this instance of the service.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/lease'
-        default:
-          description: NotFound error
-  /dhcp/lease/{mac}:
-    x-swagger-router-controller: unimplemented
-    get:
-      operationId: unimplemented
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        fetch lease information for the mac specified
-      description: |
-        Fetch lease information for the mac specified.
-      parameters:
-        - name: mac
-          in: path
-          description: identifier of a mac address
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: A single lease
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/lease'
-        default:
-          description: NotFound error
-    delete:
-      operationId: unimplemented
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: get list of all catalogs
-      description: |
-        Delete the lease for the mac specified and return information about deleted lease.
-      parameters:
-        - name: mac
-          in: path
-          description: identifier of a mac address
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: A single lease
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/lease'
-        default:
-          description: NotFound error
-  /tags:
-    x-swagger-router-controller: tags
-    get:
-      operationId: getAllTags
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: Retrieve information about all tags
-      description: |
-        Retrieve information about all tags
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            An array of all tags
-          schema:
-            type: array
-            items: 
-              type: object
-        404:
-          description: |
-            The tag name identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    post:
-      operationId: createTag
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: Create a new tag
-      description: |
-        Create a new tag
-      parameters:
-        - name: body
-          in: body
-          description: tag creation options
-          required: true
-          schema:
-            $ref: '#/definitions/generic_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            The created tag
-          schema:
-            type: object
-        500:
-          description: |
-            The tag could not be created
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /tags/{tagName}:
-    x-swagger-router-controller: tags
-    get:
-      operationId: getTag
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: Retrieve information about the tag
-      description: |
-        Retrieve information about the tag
-      parameters:
-        - name: tagName
-          in: path
-          description: The tag identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            The information about the specified tag
-          schema:
-            type: object
-        404:
-          description: |
-            The tag name identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    delete:
-      operationId: deleteTag
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: Delete the specified tag
-      description: |
-        Delete the specified tag
-      parameters:
-        - name: tagName
-          in: path
-          description: The tag identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        204:
-          description: |
-            No content
-          schema:
-            type: object
-        404:
-          description: |
-            The tag name identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /tags/{tagName}/nodes:
-    x-swagger-router-controller: tags
-    get:
-      operationId: getNodesByTag
-      x-privileges: [ 'Read' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: Retrieve nodes with the specified tag
-      description: |
-        Retrieve nodes with the specified tag
-      parameters:
-        - name: tagName
-          in: path
-          description: The tag identifier
-          required: true
-          type: string
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            The list of nodes with the specified tag
-          schema:
-            type: array
-            items:
-              type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /tags/{tagName}/nodes/workflows:
-    x-swagger-router-controller: tags
-    post:
-      operationId: postWorkflowById
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt' ]
-      summary: |
-        create workflow for nodes with the specified tag
-      description: |
-        create workflow for nodes with the specified tag
-      parameters:
-        - name: tagName
-          in: path
-          description: The tag identifier
-          required: true
-          type: string
-        - name: body
-          in: body
-          description: Workflow options
-          required: false
-          schema:
-            $ref: '#/definitions/generic_obj'
-        - name: name
-          in: query
-          description: Workflow name
-          required: false
-          type: string
-# The OpenAPI Specification 2.0 does not allow type:object for a parameter in a query.  We will use the express req.query to decode
-#        - name: options
-#          in: query
-#          description: options
-#          required: false
-#          type: object
-      tags: [ "/api/2.0" ]
-      responses:
-        202:
-          description: |
-            the workflow has been accepted
-          schema:
-            type: object
-        404:
-          description: |
-            The node with the identifier was not found
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /users:
-    x-swagger-router-controller: users
-    post:
-      x-privileges: [ 'Write' ]
-      x-authentication-type: [ 'jwt', 'anonymous' ]
-      operationId: addUser
-      summary: |
-        Add a new user
-      description: |
-        Add a new user
-      parameters:
-        - name: body
-          in: body
-          description: User information
-          required: true
-          schema:
-            $ref: '#/definitions/user_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        201:
-          description: |
-            the user has been created
-          schema:
-            type: object
-        401:
-          description: Unauthorized
-          schema:
-            type: object
-        403:
-          description: Forbidden
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      x-privileges: [ 'ConfigureUsers', 'ConfigureSelf' ]
-      x-authentication-type: [ 'jwt' ]
-      operationId: modifyUser
-      summary: |
-        Update properties on a user
-      description: |
-        Update properties on a user
-      parameters:
-        - name: body
-          in: body
-          description: User information
-          required: true
-          schema:
-            $ref: '#/definitions/user_obj'
-      tags: [ "/api/2.0" ]
-      responses:
-        200:
-          description: |
-            the user has been updated
-          schema:
-            type: object
-        401:
-          description: Unauthorized
-          schema:
-            type: object
-        403:
-          description: Forbidden
-          schema:
-            type: object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  /swagger:
-    x-swagger-pipe: swagger_raw
-
+- application/json
 definitions:
-  ErrorResponse:
-    required:
-      - message
-    properties:
-      message:
-        type: string
-
-  VersionsResponse:
-    required:
-      - message
-    properties:
-      message:
-        type: string
-
   Error:
     properties:
       code:
-        type: integer
         format: int32
-      message:
-        type: string
+        type: integer
       fields:
         type: string
-
-  catalog:
-    type: object
-    properties:
-      id:
+      message:
         type: string
-      source:
+  ErrorResponse:
+    properties:
+      message:
+        type: string
+    required:
+    - message
+  Lookups.2.0_LookupBase:
+    description: A lookup record
+    properties:
+      ipAddress:
+        format: ipv4
+        type: string
+      macAddress:
+        pattern: ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$
         type: string
       node:
-        $ref: '#/definitions/node'
-      data:
-        type: object
-        description: arbitrary json object
-    required:
-    - id
-    - source
-    - node
-
-  node:
-    type: object
-    properties:
-      id:
         type: string
-      profile:
+    type: object
+  VersionsResponse:
+    properties:
+      message:
+        type: string
+    required:
+    - message
+  action:
+    description: Action object
+    properties:
+      command:
+        description: Command to execute
+        enum:
+        - cancel
+        type: string
+      options:
+        description: Command options object
+        type: object
+    required:
+    - command
+  generic_obj:
+    type: object
+  get_user_obj:
+    properties:
+      role:
+        type: string
+      username:
+        type: string
+  ipmi-obm-service_Obm:
+    description: OBM settings
+    properties:
+      config:
+        properties:
+          host:
+            description: BMC address
+            type: string
+          password:
+            description: IPMI password
+            type: string
+          user:
+            description: IPMI username
+            type: string
+        type: object
+      nodeId:
+        type: string
+      service:
+        type: string
+    required:
+    - nodeId
+    - service
+    - config
+    type: object
+  node.2.0_PartialNode:
+    description: Post a node in RackHD
+    properties:
+      autoDiscover:
         type: string
       name:
+        description: Name of the node
         type: string
-      obmSettings:
+      type:
+        description: Type of node
+        enum:
+        - compute
+        - switch
+        - dae
+        - pdu
+        - mgmt
+        - enclosure
+        - rack
+        type: string
+    type: object
+  nodes_post_obm_by_id:
+    description: IPMI OBM settings
+    properties:
+      config:
         type: object
-      ipAddresses:
-        type: object
-      workflows:
-        type: array
-        items:
-          $ref: '#/definitions/graphobject'
-      catalogs:
-        type: array
-        items:
-          $ref: '#/definitions/catalog'
-      sku:
-        $ref: '#/definitions/sku'
+      service:
+        type: string
     required:
-    - profile
-    - name
-
-  graphobject:
+    - service
+    - config
+    type: object
+  obm_led:
     properties:
-      id:
+      nodeId:
         type: string
-      instanceid:
-        type: string
-      context:
-        type: object
-      definition:
-        type: object
-      tasks:
-        type: object
-      node:
-        $ref: '#/definitions/node'
-
-  sku:
+      value:
+        type: boolean
+  poller.2.0_PartialPoller:
+    description: A poller for periodic collection of telemetry data
     properties:
-      id:
+      config:
+        description: Poller configuration object
+        type: object
+      paused:
+        description: Asserted if poller is paused
+        type: boolean
+      pollInterval:
+        description: Interval at which poller will run
+        type: number
+      type:
+        description: Type of poller
+        enum:
+        - ipmi
+        - snmp
+        - redfish
         type: string
+    type: object
+  post_node_workflow:
+    properties:
+      name:
+        type: string
+      options:
+        properties:
+          defaults:
+            type: object
+        type: object
+    type: object
+  post_tags:
+    properties:
       name:
         type: string
       rules:
-        type: object
-      nodes:
-        type: array
         items:
-          $ref: '#/definitions/node'
+          $ref: '#/definitions/tag_rule'
+        type: array
+    type: object
+  post_tasks:
+    properties:
+      identifier:
+        type: string
+      tasks:
+        items:
+          $ref: '#/definitions/workflow_task'
+        type: array
+    type: object
+  post_workflow:
+    properties:
+      name:
+        type: string
+      options:
+        properties:
+          defaults:
+            properties:
+              graphOptions:
+                type: object
+              nodeId:
+                type: string
+            type: object
+        type: object
+    type: object
+  role_obj:
+    properties:
+      privileges:
+        items:
+          type: string
+        type: array
+      role:
+        type: string
+  skus.2.0_SkusUpsert:
+    description: A sku for RackHD
+    properties:
       discoveryGraphName:
+        minLength: 1
         type: string
       discoveryGraphOptions:
         type: object
-
-  lease:
+      name:
+        minLength: 1
+        type: string
+      rules:
+        description: Possible Rules a Sku can use
+        items:
+          $ref: '#/definitions/tag_rule'
+        type: array
+    type: object
+  ssh_settings:
+    description: SSH settings
     properties:
-      mac:
+      host:
         type: string
-      ipAddress:
+      password:
         type: string
-      reservationTimer:
-        type: integer
-        format: int32
-      reservationExpiresAt:
-        type: integer
-        format: int64
-      renewalTimer:
-        type: integer
-        format: int32
-      rebindingTimer:
-        type: integer
-        format: int32
-      expirationTimer:
-        type: integer
-        format: int32
-      renewalExpiresAt:
-        type: integer
-        format: int64
-      rebindExpiresAt:
-        type: integer
-        format: int64
-      leaseExpiresAt:
-        type: integer
-        format: int64
-      boundFlag:
-        type: boolean
-      reservedFlag:
-        type: boolean
-      reserveTimer:
+      user:
         type: string
-        format: int64
-
-    example:
-      mac: 08:00:27:52:d2:a4
-      ipAddress: 10.1.1.2
-      reservationTimer: 30
-      renewalTimer: 21600
-      rebindingTimer: 4320
-      expirationTimer: 86400
-      renewalExpiresAt: 1424149074811
-      rebindExpiresAt: 1424131794811
-      leaseExpiresAt: 1424213874811
-      boundFlag: true
-      reservedFlag: false
-
     required:
-    - mac
-    - ipAddress
-
-  generic_obj:
-   type: object
-
+    - host
+    - user
+    type: object
+  tag_rule:
+    properties:
+      contains:
+        type: string
+      equals:
+        type: string
+      greaterThan:
+        type: number
+      in:
+        items:
+          type: string
+        type: array
+      lessThan:
+        type: number
+      max:
+        type: number
+      min:
+        type: number
+      notContains:
+        type: string
+      notIn:
+        items:
+          type: string
+        type: array
+      notRegex:
+        type: string
+      path:
+        type: string
+      regex:
+        type: string
+    required:
+    - path
+    type: object
   user_obj:
     properties:
-      username:
-        type: string
       password:
         type: string
       role:
         type: string
-    required:
-      - username
-      - password
+      username:
+        type: string
+  workflow_graph:
+    properties:
+      friendlyName:
+        type: string
+      injectableName:
+        type: string
+      options:
+        type: object
+      tasks:
+        items:
+          $ref: '#/definitions/workflow_graph_task'
+        type: array
+    type: object
+  workflow_graph_task:
+    properties:
+      ignoreFailure:
+        type: boolean
+      label:
+        type: string
+      taskName:
+        type: string
+      waitOn:
+        type: object
+    type: object
+  workflow_task:
+    properties:
+      friendlyName:
+        type: string
+      implementsTask:
+        type: string
+      injectableName:
+        type: string
+      options:
+        type: object
+      properties:
+        type: object
+    type: object
+info:
+  title: RackHD 2.0
+  version: 0.1.0
+paths:
+  /catalogs:
+    get:
+      description: Get an array of catalog data describing all hardware in the system.
+      operationId: catalogsGet
+      parameters:
+      - description: A query string containing catalog properties to search
+        in: query
+        name: query
+        required: false
+        type: string
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(name|id)'
+      responses:
+        200:
+          description: Successfully retrieved a list of catalogs
+          schema:
+            $ref: '#/definitions/VersionsResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get all catalogs
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - catalogsRead
+      x-view: catalogs.2.0.json
+    x-swagger-router-controller: catalogs
+  /catalogs/{identifier}:
+    get:
+      description: Get a catalog based on its catalog identifier.
+      operationId: catalogsIdGet
+      parameters:
+      - description: The catalog identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the catalog
+          schema:
+            $ref: '#/definitions/VersionsResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get a catalog
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - catalogsRead
+      x-view: catalogs.2.0.json
+    x-swagger-router-controller: catalogs
+  /config:
+    get:
+      description: Get the RackHD server configuration properties.
+      operationId: configGet
+      responses:
+        200:
+          description: Successfully retrieved the configuration
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get server configuration
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - configRead
+    patch:
+      consumes:
+      - application/json
+      description: Modify the RackHD server configuration.
+      operationId: configPatch
+      parameters:
+      - description: The configuration properties to be modified
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/generic_obj'
+      responses:
+        200:
+          description: Successfully modified the configuration
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch server configuration
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - configModify
+    x-swagger-router-controller: config
+  /files:
+    get:
+      description: Get a list of all files currently stored.
+      operationId: filesGetAll
+      responses:
+        200:
+          description: Successfully retrieved the files
+          schema:
+            type: object
+        500:
+          description: Failed to serve file request
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get all files
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - filesRead
+    x-swagger-router-controller: files
+  /files/{fileidentifier}:
+    delete:
+      description: Delete a file based on uuid.
+      operationId: filesDelete
+      parameters:
+      - description: UUID of the file you wish to delete
+        in: path
+        name: fileidentifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: File successfully deleted
+        404:
+          description: File not found.
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Error deleting file from the database
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a file
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - FilesRemove
+    get:
+      description: Get file based on uuid or file name.
+      operationId: filesGet
+      parameters:
+      - description: The uuid or file name of a file as provided when you originally stored it
+        in: path
+        name: fileidentifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved specified file
+          schema:
+            type: file
+        404:
+          description: File not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Failed to serve file request
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a file
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - filesRead
+    put:
+      consumes:
+      - application/octet-stream
+      - application/x-www-form-urlencoded
+      description: Put file based on its filename. Returns the uuid of the stored file.
+      operationId: filesPut
+      parameters:
+      - description: The filename of the file you want to store
+        in: path
+        name: fileidentifier
+        required: true
+        type: string
+      responses:
+        201:
+          description: Successfully stored file
+          schema:
+            type: string
+        500:
+          description: Failure serving file request
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put a file
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - filesWrite
+      x-view: file.2.0.json
+    x-swagger-router-controller: files
+  /files/{filename}/md5:
+    get:
+      description: Get md5sum based on file name.
+      operationId: filesMd5Get
+      parameters:
+      - description: File name of a file as provided when you originally stored it
+        in: path
+        name: filename
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the md5sum of the specified file
+          schema:
+            type: object
+        404:
+          description: File not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Failed to serve file request
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get md5sum of file
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - filesRead
+      x-view: files.md5.2.0.json
+    x-swagger-router-controller: files
+  /files/{filename}/metadata:
+    get:
+      description: Get file metadata by file name.
+      operationId: filesMetadataGet
+      parameters:
+      - description: The name of a file as provided when you originally stored it
+        in: path
+        name: filename
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved metadata of the specified file
+          schema:
+            type: object
+        404:
+          description: File not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Failed to serve file metadata request
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get file metadata
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - filesRead
+      x-view: file.2.0.json
+    x-swagger-router-controller: files
+  /lookups:
+    get:
+      description:
+        Get a list of all lookups currently stored. Lookups relate mac addresses to ip addresses.
+      operationId: lookupsGet
+      parameters:
+      - description: Query string specifying properties to search for
+        in: query
+        name: q
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the list of lookups
+          schema:
+            items:
+              type: object
+            type: array
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a list of lookups
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - lookupsRead
+    post:
+      description: Create and store a new lookup.
+      operationId: lookupsPost
+      parameters:
+      - description: The properties of the lookup
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/Lookups.2.0_LookupBase'
+      responses:
+        201:
+          description: Successfully created new lookup
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a lookup
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - lookupsWrite
+      x-swagger-schema: lookups.2.0.json#/definitions/LookupPost
+    x-swagger-router-controller: lookups
+  /lookups/{id}:
+    delete:
+      description: Delete the specified lookup.
+      operationId: lookupsDelById
+      parameters:
+      - description: The identifier of the lookup to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted lookup
+        404:
+          description: The specified lookup was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a lookup
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - lookupsRemove
+    get:
+      description: Get a lookup by specifying its identifier.
+      operationId: lookupsGetById
+      parameters:
+      - description: The lookup identifier
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the lookup
+          schema:
+            items:
+              type: object
+            type: array
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a lookup
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - lookupsRead
+    patch:
+      description: Modify the properties of a lookup.
+      operationId: lookupsPatchById
+      parameters:
+      - description: The id of the lookup to patch
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The lookup properties to be modified
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/Lookups.2.0_LookupBase'
+      responses:
+        200:
+          description: Successfully modified the lookup
+          schema:
+            type: object
+        404:
+          description: The specified lookup was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch a lookup
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - lookupsModify
+      x-swagger-schema: lookups.2.0.json#/definitions/LookupBase
+    x-swagger-router-controller: lookups
+  /nodes:
+    get:
+      description: Get a list of all currently stored nodes.
+      operationId: nodesGetAll
+      parameters:
+      - description: Query string specifying properties to search for
+        in: query
+        name: $skip
+        required: false
+        type: integer
+      - description: Query string specifying properties to search for
+        in: query
+        name: $top
+        required: false
+        type: integer
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(name|id)'
+      responses:
+        200:
+          description: Successfully retrieved the list of nodes
+          schema:
+            items:
+              type: object
+            type: array
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a list of nodes
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - nodesRead
+      x-view: node.2.0.json
+    post:
+      description: Create and store a new node manually.
+      operationId: nodesPost
+      parameters:
+      - description: The properties of the new node
+        in: body
+        name: identifiers
+        required: true
+        schema:
+          $ref: '#/definitions/node.2.0_PartialNode'
+      responses:
+        201:
+          description: Successfully created node
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesWrite
+      x-swagger-deserializer: nodes
+      x-swagger-schema: node.2.0.json#/definitions/Node
+    x-swagger-router-controller: nodes
+  /nodes/tags/{tagName}:
+    delete:
+      description: Delete specified tag from all nodes.
+      operationId: nodesMasterDelTagById
+      parameters:
+      - description: The tag identifier
+        in: path
+        name: tagName
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted tags
+        404:
+          description: The tag name identifier was not found
+      summary: Delete nodes tag
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesRemove
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}:
+    delete:
+      description: Delete the specified node.
+      operationId: nodesDelById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the node
+        404:
+          description: The specified node was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesRemove
+    get:
+      description: Get all information on the specified node.
+      operationId: nodesGetById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified node
+          schema:
+            items:
+              type: object
+            type: array
+        404:
+          description: The specified node was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - nodesRead
+      x-view: node.2.0.json
+    patch:
+      description: Modify the properties of the specified node.
+      operationId: nodesPatchById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The node properties to modify
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/node.2.0_PartialNode'
+      responses:
+        200:
+          description: Successfully modified the specified node
+          schema:
+            type: object
+        404:
+          description: The specified node was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesModify
+      x-swagger-deserializer: nodes
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/catalogs:
+    get:
+      description: Get a list of all of the catalogs for the specified node.
+      operationId: nodesGetCatalogById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved catalogs of specified node
+          schema:
+            type: object
+        404:
+          description: The specified node was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the catalogs for a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - catalogsRead
+      x-view: catalogs.2.0.json
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/catalogs/{source}:
+    get:
+      description:
+        Get a list of all of the catalogs for the specified node, containing the specified value of the source catalog property.
+      operationId: nodesGetCatalogSourceById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The source catalog name to fetch
+        in: path
+        name: source
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved specific source catalog of specified node
+          schema:
+            type: object
+        404:
+          description: The specified node was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the catalogs for a node by source
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - catalogsRead
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/obm:
+    get:
+      description: Get all the OBM settings for the specified node.
+      operationId: nodesGetObmsByNodeId
+      parameters:
+      - description: The Node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified OBM service
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get all OBM services
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - obmsRead
+      x-view: obm.2.0.json
+    put:
+      description: Create or update the specified OBM service with the associated Node ID
+      operationId: nodesPutObmsByNodeId
+      parameters:
+      - description: The Node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The OBM settings information to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/nodes_post_obm_by_id'
+      responses:
+        201:
+          description: Successfully put the OBM service
+          schema:
+            type: object
+        500:
+          description: OBM service creation failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put an OBM service
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - obmsWrite
+      x-swagger-schema: obm
+      x-view: obm.2.0.json
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/pollers:
+    get:
+      description: Get a list of all of the pollers for the specified node.
+      operationId: nodesGetPollersById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the pollers of specified node
+          schema:
+            type: object
+        404:
+          description: The specified node was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the pollers for a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/relations:
+    delete:
+      description: Edit the relations fields of nodes to remove specific relationships
+      operationId: nodesDelRelations
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: >
+          A json object with relation types as keys and arrays of node ids as values.
+          The nodes given relation types will be updated to remove the nodes given by id
+        in: body
+        name: content
+        required: true
+        schema:
+          $ref: '#/definitions/generic_obj'
+      responses:
+        204:
+          description: Successfully removed the relations
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Remove relations from a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesRemove
+      x-swagger-schema: relations.2.0.json#/definitions/Relation
+    get:
+      description: Get the relations field of the specified node
+      operationId: nodesGetRelations
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the nodes relations
+          schema:
+            items:
+              type: object
+            type: array
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a nodes relations
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - nodesRead
+    put:
+      description: Edit the relations fields of a specifc node to add
+        one more relationships.
+      operationId: nodesAddRelations
+      parameters:
+      - description: The identifier for the node
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: >
+          A json object with relation types as keys and arrays of node
+          ids as values. The nodes given relation types will be updated with
+          the nodes given by id
+        in: body
+        name: content
+        required: true
+        schema:
+          $ref: '#/definitions/generic_obj'
+      responses:
+        200:
+          description: Node relations update succeeded.
+          schema:
+            type: object
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Add relationships between nodes
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesModify
+      x-swagger-schema: relations.2.0.json#/definitions/Relation
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/ssh:
+    get:
+      description: Get all of the ssh settings associated with the specified node.
+      operationId: nodesGetSshById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the ssh settings
+          schema:
+            type: object
+        404:
+          description: The node with the identifier was not found or has no ssh settings.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the ssh settings for a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - nodesRead
+      x-swagger-serializer: nodes
+    post:
+      description: Create the ssh settings associated with the specified node.
+      operationId: nodesPostSshById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The ssh properties to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ssh_settings'
+      responses:
+        201:
+          description: Successfull created ssh settings
+        404:
+          description: The specified node was not found or has no ssh settings.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post ssh settings
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesWrite
+      x-swagger-deserializer: nodes
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/tags:
+    get:
+      description: Get a list of all tags associated with the specified node.
+      operationId: nodesGetTagsById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved node tags
+          schema:
+            items:
+              type: object
+            type: array
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get node tags
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - nodesRead
+    patch:
+      description: Modify the tag(s) associated with the specified node.
+      operationId: nodesPatchTagById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The tag properties to patch
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/post_tags'
+      responses:
+        200:
+          description: Successfully modified node tag(s).
+          schema:
+            type: object
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch node tags
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesModify
+      x-swagger-schema: node.2.0.json#/definitions/PartialNode
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/tags/{tagName}:
+    delete:
+      description: Delete the specified tag from the specified node.
+      operationId: nodesDelTagById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The name of the tag
+        in: path
+        name: tagName
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted a specified tag from a node.
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a tag from a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - nodesRemove
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/workflows:
+    get:
+      description: >
+        Get a list of all workflows that have run against the specified node, or
+        are currently running against the node.
+      operationId: nodesGetWorkflowById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: A query string to specify workflow properties to search for
+        in: query
+        name: active
+        required: false
+        type: boolean
+      responses:
+        200:
+          description: Successfully retrieved the workflows for specified node
+          schema:
+            type: object
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get all workflows for a node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+    post:
+      description: Run a workflow against for the specified node.
+      operationId: nodesPostWorkflowById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: 
+          The name property set to the injectableName property of the workflow graph
+        in: body
+        name: body
+        required: false
+        schema:
+          $ref: '#/definitions/post_node_workflow'
+      - description: The optional name of the workflow graph to run
+        in: query
+        name: name
+        required: false
+        type: string
+      responses:
+        201:
+          description: Successfully started the specified workflow.
+          schema:
+            type: object
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post workflow for the node
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsWrite
+    x-swagger-router-controller: nodes
+  /nodes/{identifier}/workflows/action:
+    put:
+      description: >
+        Perform an action on a workflow associated with a node. Currently,
+        the cancel action is supported.
+      operationId: nodesWorkflowActionById
+      parameters:
+      - description: The node identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The action property set to the command to execute
+        in: body
+        name: action
+        required: true
+        schema:
+          $ref: '#/definitions/action'
+      responses:
+        202:
+          description: Successfully performed the action on the specified workflow
+          schema:
+            type: object
+        404:
+          description: The specified node was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Perform an action on a workflow
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsModify
+    x-swagger-router-controller: nodes
+  /obms:
+    get:
+      description: >
+        Get a list of all OBM settings that have been associated
+        with nodes. OBM settings allow RackHD to communicate with
+        the BMC of a node.
+      operationId: obmsGet
+      responses:
+        200:
+          description: Successfully retrieved the list of OBM service instances
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of all OBM service instances
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - obmsRead
+      x-view: obm.2.0.json
+    put:
+      description:
+        Create or update the specified OBM service, and associate it with a node.
+      operationId: obmsPut
+      parameters:
+      - description: The OBM settings information to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ipmi-obm-service_Obm'
+      responses:
+        201:
+          description: Successfully put the OBM service
+          schema:
+            type: object
+        500:
+          description: OBM service creation failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put an OBM service
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - obmsWrite
+      x-swagger-schema: obm
+      x-view: obm.2.0.json
+    x-swagger-router-controller: obms
+  /obms/definitions:
+    get:
+      description:
+        Get a list of OBM schemas, which define the properties required to create OBM settings.
+      operationId: obmsDefinitionsGetAll
+      responses:
+        200:
+          description: Successfully retrieved a list of OBM schemas
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of OBM services
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - obmsRead
+    x-swagger-router-controller: obms
+  /obms/definitions/{name}:
+    get:
+      description: Get the contents of the specified OBM service schema.
+      operationId: obmsDefinitionsGetByName
+      parameters:
+      - description: The OBM service name
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified OBM schema
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get an OBM service definition
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - obmsRead
+    x-swagger-router-controller: obms
+  /obms/led:
+    post:
+      description: Enable or disable identify LED on node through OBM, if supported.
+      operationId: obmsPostLed
+      parameters:
+      - description: >
+          If the body contains the property value: true, the LED will be lit.
+          If the value property does not exist, the LED will be turned off.
+          The body must contain the property nodeId set to the correct node
+          identifier.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/obm_led'
+      responses:
+        201:
+          description: OBM settings accepted
+        404:
+          description: The node with the identifier was not found or has no obm settings
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Set identify light status
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - obmsRead
+    x-swagger-router-controller: obms
+  /obms/{identifier}:
+    delete:
+      description: Delete the OBM settings with the specified identifier.
+      operationId: obmsDeleteById
+      parameters:
+      - description: The OBM service identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified OBM settings
+          schema:
+            type: object
+        404:
+          description: The OBM service with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete OBM settings
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - obmsRemove
+    get:
+      description: Get the OBM settings associated with the specified identifier
+      operationId: obmsGetById
+      parameters:
+      - description: The OBM service identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified OBM service
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get an OBM service
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - obmsRead
+      x-view: obm.2.0.json
+    patch:
+      description: Update the properties of the OBM settings with the specified identifier.
+      operationId: obmsPatchById
+      parameters:
+      - description: The OBM service identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The OBM properties to patch
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ipmi-obm-service_Obm'
+      responses:
+        200:
+          description: Successfully patched the specified OBM settings
+          schema:
+            type: object
+        500:
+          description: OBM patch failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch OBM settings
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - obmsModify
+      x-swagger-schema: obm
+    x-swagger-router-controller: obms
+  /pollers:
+    get:
+      description: Get list of all pollers that are currently running.
+      operationId: pollersGet
+      parameters:
+      - description: Query string specifying properties to search for
+        in: query
+        name: $skip
+        required: false
+        type: integer
+      - description: Query string specifying properties to search for
+        in: query
+        name: $top
+        required: false
+        type: integer
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(id)'
+      responses:
+        200:
+          description: Successful retrieval of the list of pollers
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a list of all active pollers
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+      x-view: poller.2.0.json
+    post:
+      description: Create and start a new poller, which will run at the specified time interval.
+      operationId: pollersPost
+      parameters:
+      - description: >
+          The request body must contain the necessary information
+          to create the poller, including type, pollInterval, and command. The
+          node identifier must also be included if the poller is to be associated
+          with a node.
+        in: body
+        name: content
+        required: true
+        schema:
+          $ref: '#/definitions/poller.2.0_PartialPoller'
+      responses:
+        201:
+          description: Poller created successfully
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - pollersWrite
+      x-swagger-schema: poller.2.0.json#/definitions/Poller
+      x-view: poller.2.0.json
+    x-swagger-router-controller: pollers
+  /pollers/library:
+    get:
+      description: Get a list of all available poller definitions in the poller library.
+      operationId: pollersLibGet
+      responses:
+        200:
+          description: Successful retrieval of the list of all pollers in the library
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a list of possible pollers
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+    x-swagger-router-controller: pollers
+  /pollers/library/{identifier}:
+    get:
+      description: >
+        Get the poller definition with the specified identifier from the
+        poller library
+      operationId: pollersLibByIdGet
+      parameters:
+      - description: The poller identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successful retrieval of the specified poller
+          schema:
+            type: object
+        404:
+          description: The poller with specified identifier not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+    x-swagger-router-controller: pollers
+  /pollers/{identifier}:
+    delete:
+      description: Delete the poller with the specified identifier.
+      operationId: pollersDelete
+      parameters:
+      - description: The poller identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Poller was deleted successfully
+        404:
+          description: Poller with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - pollersRemove
+    get:
+      description: >
+        Get information associated with the specified poller, including
+        type, run interval, command, and whether the poller is paused.
+      operationId: pollersIdGet
+      parameters:
+      - description: The poller identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Poller information retrieved successfully
+          schema:
+            type: object
+        404:
+          description: Poller with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+      x-view: poller.2.0.json
+    patch:
+      description: Modify one or more properties of the poller with the specified identifier.
+      operationId: pollersPatch
+      parameters:
+      - description: The poller identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The body must contain the specific properties of the poller that will be modified.
+        in: body
+        name: content
+        required: true
+        schema:
+          $ref: '#/definitions/poller.2.0_PartialPoller'
+      responses:
+        200:
+          description: Poller was successfully modified
+          schema:
+            type: object
+        404:
+          description: Poller with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch a poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - pollersModify
+      x-swagger-schema: poller.2.0.json#/definitions/PartialPoller
+      x-view: poller.2.0.json
+    x-swagger-router-controller: pollers
+  /pollers/{identifier}/data:
+    get:
+      description: >
+        Get the complete history of output data generated by the poller
+        with the specified identifier.
+      operationId: pollersDataGet
+      parameters:
+      - description: The identifier of the poller
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved poller data
+          schema:
+            type: object
+        204:
+          description: Successfully processed the request and did not return any data
+          schema:
+            type: object
+        404:
+          description: Poller with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get output data for a poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+    x-swagger-router-controller: pollers
+  /pollers/{identifier}/data/current:
+    get:
+      description:
+        Get latest output data generated by the poller poller with the specified identifier.
+      operationId: pollersCurrentDataGet
+      parameters:
+      - description: The identifier of the poller
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the latest poller data
+          schema:
+            type: object
+        204:
+          description: Successfully processed the request and did not return any data
+          schema:
+            type: object
+        404:
+          description: Poller with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get latest data for a poller
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - pollersRead
+    x-swagger-router-controller: pollers
+  /profiles:
+    get:
+      description: >
+        Get the list of currently defined profiles. Profiles are scripts
+        used by RackHD to control how a node PXE boots.
+      operationId: profilesGet
+      parameters:
+      - collectionFormat: multi
+        description: List of valid MAC addresses to lookup
+        in: query
+        items:
+          type: string
+        name: macs
+        required: false
+        type: array
+      - collectionFormat: multi
+        description: List of IP addresses to lookup
+        in: query
+        items:
+          type: string
+        name: ips
+        required: false
+        type: array
+      - description:
+          When macs parameter is not passed, passed with IP adds MAC address to lookup
+        in: query
+        name: mac
+        required: false
+        type: string
+      - description: 
+          When macs parameters is not passed, passed with MAC adds IP address to lookup
+        in: query
+        name: ip
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved a list of profiles for specified mac / ip
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of profiles
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - profilesRead
+    x-swagger-router-controller: profiles
+  /profiles/library/{name}:
+    get:
+      description: Get the contents of a profile specified by its name.
+      operationId: profilesGetLibByName
+      parameters:
+      - description: The profile name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The profile scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully returned profile
+          schema:
+            type: object
+        404:
+          description: The profile with the specified name was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get contents of a profile
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - profilesRead
+    put:
+      consumes:
+      - application/octet-stream
+      - application/x-www-form-urlencoded
+      description: Create or modify the specified profile metadata and contents.
+      operationId: profilesPutLibByName
+      parameters:
+      - description: The profile name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The profile scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        201:
+          description: Successfully created or modified the specified profile
+          schema:
+            type: object
+        500:
+          description: Profile creation failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put a profile
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - profilesWrite
+    x-swagger-router-controller: profiles
+  /profiles/metadata:
+    get:
+      description: Get the list of metadata associated with all known profiles.
+      operationId: profilesGetMetadata
+      responses:
+        200:
+          description: Successfully retrieved the list of profile metadata
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of profile metadata
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - profilesRead
+      x-view: renderable.2.0.json
+    x-swagger-router-controller: profiles
+  /profiles/metadata/{name}:
+    get:
+      description: Get the metadata associated with the specified profile.
+      operationId: profilesGetMetadataByName
+      parameters:
+      - description: The profile name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The profile scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully returned the profile
+          schema:
+            type: object
+        404:
+          description: The profile with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified profiles metadata from database
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - profilesRead
+      x-view: renderable.2.0.json
+    x-swagger-router-controller: profiles
+  /profiles/switch/error:
+    post:
+      description:
+        Manually send a switch error to the log, since most switches do not generate errors.
+      operationId: profilesPostSwitchError
+      parameters:
+      - description: The switch error to send
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/generic_obj'
+      responses:
+        201:
+          description: Successfully posted the switch error
+          schema:
+            type: object
+        500:
+          description: Upload failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a switch error
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - profilesWrite
+    x-swagger-router-controller: profiles
+  /profiles/switch/{vendor}:
+    get:
+      description: Get a profile rendered with the switch vendor name.
+      operationId: profilesGetSwitchVendor
+      parameters:
+      - description: The switch vendor name
+        in: path
+        name: vendor
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully returned the profile with switch vendor name.
+          schema:
+            type: object
+        404:
+          description: Profile not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a profile
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - profilesRead
+    x-swagger-router-controller: profiles
+  /roles:
+    get:
+      description: Get the list of roles currently stored in the system.
+      operationId: listRoles
+      responses:
+        200:
+          description: Successfully retrieved the list of roles
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the list of roles
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - rolesRead
+    post:
+      description: Create a new role and store it.
+      operationId: addRole
+      parameters:
+      - description: The role information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/role_obj'
+      responses:
+        201:
+          description: Successfully created a new role
+          schema:
+            type: object
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a new role
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      - anonymous
+      x-privileges:
+      - Write
+    x-swagger-router-controller: roles2.0
+  /roles/{name}:
+    delete:
+      description: Delete the specified Role.
+      operationId: removeRole
+      parameters:
+      - description: role name
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified role
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a role
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - rolesRemove
+    get:
+      description: Get information about the specified role.
+      operationId: getRole
+      parameters:
+      - description: The role name
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified role
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a role
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - rolesRead
+    patch:
+      description: Modify the properties of a role.
+      operationId: modifyRole
+      parameters:
+      - description: The role name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The role information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/role_obj'
+      responses:
+        200:
+          description: Successfully modified the role
+          schema:
+            type: object
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch a role
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - rolesModify
+    x-swagger-router-controller: roles2.0
+  /schemas:
+    get:
+      description: Get a list of all schemas currently stored in the system.
+      operationId: schemasGet
+      responses:
+        200:
+          description: Successfully retrieved the list of schemas
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get all schemas
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - schemasRead
+    x-swagger-router-controller: schemas2
+  /schemas/tasks:
+    get:
+      description: Get a list of all task schema names currently stored in the system.
+      operationId: taskSchemasGet
+      responses:
+        200:
+          description: Successfully retrieved the list of task schema names
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get all task schemas names
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - schemasRead
+    x-swagger-router-controller: schemas2
+  /schemas/tasks/{identifier}:
+    get:
+      description: Get the specified task schema.
+      operationId: taskSchemasIdGet
+      parameters:
+      - description: The filename of the task schema
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: >
+          The reference resolve flag.
+          false - a simple schema with any internal reference only in the response.
+          true - all the internal references will be resolved and fully defined in
+          the response.
+        in: query
+        name: resolveRef
+        required: false
+        type: boolean
+      responses:
+        200:
+          description: Successfully retrieved the task schema
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get a task schema
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - schemasRead
+    x-swagger-router-controller: schemas2
+  /schemas/{identifier}:
+    get:
+      description: Get the specified schema.
+      operationId: schemasIdGet
+      parameters:
+      - description: The identifier of the schema
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the schema
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get a schema
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - schemasRead
+    x-swagger-router-controller: schemas2
+  /skus:
+    get:
+      description: >
+        Get list of currently defined SKUs, which are used to
+        group nodes based on matching a set of rules with information
+        present in a nodes catalog.
+      operationId: skusGet
+      parameters:
+      - description: SKU properties to search
+        in: query
+        name: query
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the list of SKUs
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of SKUs
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - skusRead
+      x-view: sku-2.0.json
+    post:
+      description: Create a new SKU.
+      operationId: skusPost
+      parameters:
+      - description: The properties used to define the new SKU
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/skus.2.0_SkusUpsert'
+      responses:
+        201:
+          description: Successfully created the SKU
+          schema:
+            type: object
+        500:
+          description: Upload failed.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - skusWrite
+      x-swagger-schema: skus.2.0.json#/definitions/SkusUpsert
+    put:
+      description: Create or modify a SKU.
+      operationId: skusPut
+      parameters:
+      - description: The properties used to define the SKU
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/skus.2.0_SkusUpsert'
+      responses:
+        201:
+          description: Successfully created or updated SKU definition
+          schema:
+            type: object
+        500:
+          description: Update failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put a SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - skusWrite
+      x-swagger-schema: skus.2.0.json#/definitions/SkusUpsert
+    x-swagger-router-controller: skus
+  /skus/pack:
+    post:
+      consumes:
+      - multipart/form-data
+      - application/x-www-form-urlencoded
+      description: >
+        Create a new SKU Pack, which is used to serve the specified
+        set of files to a node during provisioning.
+      operationId: skuPackPost
+      responses:
+        201:
+          description: Successfully created the SKU Pack
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a SKU Pack
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - skusWrite
+    x-swagger-router-controller: skus
+  /skus/{identifier}:
+    delete:
+      description: Delete the SKU with the specified identifier.
+      operationId: skusIdDelete
+      parameters:
+      - description: The SKU identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified SKU
+          schema:
+            type: object
+        404:
+          description: The SKU with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - skusRemove
+    get:
+      description: Get the SKU with the specified identifier.
+      operationId: skusIdGet
+      parameters:
+      - description: The SKU identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfull retrieved the specified SKU
+          schema:
+            type: object
+        404:
+          description: The SKU with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - skusRead
+      x-view: sku-2.0.json
+    patch:
+      description: Modify the SKU with the specified identifier.
+      operationId: skusPatch
+      parameters:
+      - description: The sku identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The SKU properties to be modified
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/skus.2.0_SkusUpsert'
+      responses:
+        200:
+          description: Successfully modified the specified SKU
+          schema:
+            type: object
+        404:
+          description: The SKU with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: SKU patch failed
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch a SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - skusModify
+    x-swagger-router-controller: skus
+  /skus/{identifier}/nodes:
+    get:
+      description: Get the nodes associated with the specified SKU definition.
+      operationId: skusIdGetNodes
+      parameters:
+      - description: The SKU identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the nodes associated with the specified SKU
+          schema:
+            type: object
+        404:
+          description: The SKU with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get nodes for specific SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - skusRead
+    x-swagger-router-controller: skus
+  /skus/{identifier}/pack:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Delete a SKU Pack associated with the specified SKU.
+      operationId: skusIdDeletePack
+      parameters:
+      - description: The SKU identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified SKU Pack
+          schema:
+            type: object
+        404:
+          description: The SKU Pack with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a SKU Pack
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - write
+      - skusRemove
+    put:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Create or modify a SKU Pack, and associate the SKU Pack with the specified SKU.
+      operationId: skusIdPutPack
+      parameters:
+      - description: The identifier of the SKU Pack
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        201:
+          description: Successfully created the SKU Pack
+          schema:
+            type: object
+        404:
+          description: The SKU with the specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put a SKU Pack to the specified SKU
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - write
+      - skusWrite
+    x-swagger-router-controller: skus
+  /swagger:
+    x-swagger-pipe: swagger_raw
+  /tags:
+    get:
+      description: Get a list of all tags currently stored.
+      operationId: getAllTags
+      parameters:
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(name|id)'
+      responses:
+        200:
+          description: Successfully retrieved all tags.
+          schema:
+            items:
+              type: object
+            type: array
+        404:
+          description: No tags found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get all tags
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - tagsRead
+      x-view: tags.2.0.json
+    post:
+      description: Create a new tag.
+      operationId: createTag
+      parameters:
+      - description: The tag properties
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/post_tags'
+      responses:
+        201:
+          description: Successfully created the tag
+          schema:
+            type: object
+        500:
+          description: The tag could not be created
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a tag
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - tagsWrite
+      x-swagger-schema: tags.2.0.json
+    x-swagger-router-controller: tags
+  /tags/{tagName}:
+    delete:
+      description: Delete the specified tag.
+      operationId: deleteTag
+      parameters:
+      - description: The tag identifier
+        in: path
+        name: tagName
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified tag.
+          schema:
+            type: object
+        404:
+          description: The tag with the specified name was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified tag
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - tagsRemove
+    get:
+      description: Get the data associated with the specified tag.
+      operationId: getTag
+      parameters:
+      - description: The tag identifier
+        in: path
+        name: tagName
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved information about the specified tag
+          schema:
+            type: object
+        404:
+          description: The tag name identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a tag
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - tagsRead
+      x-view: tags.2.0.json
+    x-swagger-router-controller: tags
+  /tags/{tagName}/nodes:
+    get:
+      description: Get a list of nodes with the specified tag.
+      operationId: getNodesByTag
+      parameters:
+      - description: The tag identifier
+        in: path
+        name: tagName
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the list of nodes with the specified tag
+          schema:
+            items:
+              type: object
+            type: array
+        404:
+          description: The specified tag was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get nodes with the specified tag
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - tagsRead
+    x-swagger-router-controller: tags
+  /tags/{tagName}/nodes/workflows:
+    post:
+      description: Start a workflow against all nodes with the specified tag.
+      operationId: postWorkflowById
+      parameters:
+      - description: The tag identifier
+        in: path
+        name: tagName
+        required: true
+        type: string
+      - description: The workflow options to post
+        in: body
+        name: body
+        required: false
+        schema:
+          $ref: '#/definitions/post_node_workflow'
+      - description: Query string specifying the optional workflow injectable name
+        in: query
+        name: name
+        required: false
+        type: string
+      responses:
+        202:
+          description: Successfully posted workflow to all nodes with specified tag
+          schema:
+            type: object
+        404:
+          description: The specified tag was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post workflow to node by tag
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsWrite
+    x-swagger-router-controller: tags
+  /tasks/bootstrap.js:
+    get:
+      description: Used internally by the system - get tasks bootstrap.js
+      operationId: getBootstrap
+      parameters:
+      - description: Query string containing the mac address
+        in: query
+        name: macAddress
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved bootstrap.js
+          schema:
+            $ref: '#/definitions/VersionsResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get tasks bootstrap.js
+      tags:
+      - /api/2.0
+    x-swagger-router-controller: tasks
+  /tasks/{identifier}:
+    get:
+      description: Get the specified task.
+      operationId: getTasksById
+      parameters:
+      - description: The task identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified task
+          schema:
+            type: object
+        404:
+          description: The specified task was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified task
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      x-view: tasks.2.0.json
+    post:
+      description: Start the specified task
+      operationId: postTaskById
+      parameters:
+      - description: The task identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The obm settings to apply
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/post_tasks'
+      responses:
+        201:
+          description: Successfully posted the specified task
+          schema:
+            type: object
+        404:
+          description: The specified task was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a task
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      x-view: tasks.2.0.json
+    x-swagger-router-controller: tasks
+  /templates/library/{name}:
+    delete:
+      description: Delete the template with the specified name.
+      operationId: templatesLibDelete
+      parameters:
+      - description: The name of the template
+        in: path
+        name: name
+        required: true
+        type: string
+      - default: global
+        description: The template scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified template
+        404:
+          description: The template with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified template
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - templatesRemove
+    get:
+      description: Get the contents of the specified template file.
+      operationId: templatesLibGet
+      parameters:
+      - description: The file name of the template
+        in: path
+        name: name
+        required: true
+        type: string
+      - default: global
+        description: The template scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the contents of the specified template
+          schema:
+            type: object
+        404:
+          description: The template with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified template
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - templatesRead
+    put:
+      consumes:
+      - text/plain
+      - application/x-www-form-urlencoded
+      description: Create or update the metadata and the content of the specified template.
+      operationId: templatesLibPut
+      parameters:
+      - description: The name of the template
+        in: path
+        name: name
+        required: true
+        type: string
+      - default: global
+        description: The template scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        201:
+          description: Successfully created or updated the specified template.
+          schema:
+            type: object
+        404:
+          description: The specified template was not found.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Create or update the specified template
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - templatesWrite
+    x-swagger-router-controller: templates
+  /templates/metadata:
+    get:
+      description: >
+        Retrieves metadata for each defined template. The metadata
+        includes the template name, and scope, not the actual
+        contents of the template.
+      operationId: templatesMetaGet
+      parameters:
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(name|id)'
+      responses:
+        200:
+          description: Successfully retrieved all template metadata
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a list of metadata for all templates
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - templatesRead
+      x-view: renderable.2.0.json
+    x-swagger-router-controller: templates
+  /templates/metadata/{name}:
+    get:
+      description: Get metadata for the template with the specified name.
+      operationId: templatesMetaGetByName
+      parameters:
+      - description: The file name of the template
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The template scope
+        in: query
+        name: scope
+        required: false
+        type: string
+      responses:
+        200:
+          description:
+            Successfully retrieved the metadata of the specified template.
+          schema:
+            type: object
+        404:
+          description: Template with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the metadata for the specified template
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - templatesRead
+      x-view: renderable.2.0.json
+    x-swagger-router-controller: templates
+  /templates/{name}:
+    get:
+      description: Get the template with the specified name.
+      operationId: templatesGetByName
+      parameters:
+      - description: The name of the template
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfuly retrieved the specified template
+          schema:
+            type: object
+        404:
+          description: The template with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified template
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - templatesRead
+    head:
+      description: Get the template headers with the specified name. Only gets headers
+        and returns no body.
+      operationId: templatesHeadByName
+      parameters:
+      - description: The name of the template
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfuly retrieved the specified template headers
+          schema:
+            type: object
+        404:
+          description: The template with specified identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get headers of the specified template
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+    x-swagger-router-controller: templates
+  /users:
+    get:
+      description: Get the list of users currently stored in the system.
+      operationId: listUsers
+      parameters:
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(name|id)'
+      responses:
+        200:
+          description: Successfully retrieved the list of users
+          schema:
+            items:
+              $ref: '#/definitions/get_user_obj'
+            type: array
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the list of users
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - usersRead
+      x-view: users.2.0.json
+    post:
+      description: Create a new user and store it.
+      operationId: addUser
+      parameters:
+      - description: The user information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user_obj'
+      responses:
+        201:
+          description: Successfully created the user
+          schema:
+            type: object
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Post a new user
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      - anonymous
+      x-privileges:
+      - Write
+      - usersWrite
+      x-swagger-schema: user.2.0.json#/definitions/User
+      x-view: users.2.0.json
+    x-swagger-router-controller: users
+  /users/{name}:
+    delete:
+      description: Delete the specified user.
+      operationId: removeUser
+      parameters:
+      - description: The username
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified user
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified user
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - usersRemove
+    get:
+      description: Get information about the specified user.
+      operationId: getUser
+      parameters:
+      - description: The username
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified user
+          schema:
+            $ref: '#/definitions/user_obj'
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified user
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - usersRead
+      x-view: users.2.0.json
+    patch:
+      description: Modify the properties of a user.
+      operationId: modifyUser
+      parameters:
+      - description: The username
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The user information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/get_user_obj'
+      responses:
+        200:
+          description: Successfully modified the specified user.
+          schema:
+            type: object
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+        403:
+          description: Forbidden
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Patch the specified user
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - ConfigureUsers
+      - ConfigureSelf
+      - usersModify
+      x-swagger-schema: user.2.0.json#/definitions/PartialUser
+      x-view: users.2.0.json
+    x-swagger-router-controller: users
+  /views:
+    get:
+      description: >
+        Retrieve a list of all views. Views are used to render
+        the output of various system resources, such as nodes,
+        pollers, and OBM settings.
+      operationId: viewsGet
+      responses:
+        200:
+          description: Successfully retrieved views
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get all views
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - viewsRead
+      x-view: renderable.2.0.json
+    x-swagger-router-controller: views
+  /views/{identifier}:
+    delete:
+      description: Delete a view with the specified name.
+      operationId: viewsDelete
+      parameters:
+      - description: The name of view to delete
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified view
+          schema:
+            type: object
+        404:
+          description: The view with specified name was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified view
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - viewsRemove
+    get:
+      description: Get the view with the specified file name.
+      operationId: viewsGetById
+      parameters:
+      - description: The view name
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified view
+          schema:
+            type: object
+        404:
+          description: The view with specified name was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified view
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - viewsRead
+      x-view: renderable.2.0.json
+    put:
+      consumes:
+      - text/plain
+      - application/octet-stream
+      description: Create or update a view with the specified name.
+      operationId: viewsPut
+      parameters:
+      - description: The name of view to create or update
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        201:
+          description: Successfully created or modified the specified view.
+          schema:
+            type: object
+      summary: Put the specified view
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - viewsWrite
+    x-swagger-router-controller: views
+  /workflows:
+    get:
+      description: Get list workflow that have been run or are currently running.
+      operationId: workflowsGet
+      parameters:
+      - description: Query string to search for specific workflow properties
+        in: query
+        name: active
+        required: false
+        type: boolean
+      - description: Query string specifying properties to search for
+        in: query
+        name: $skip
+        required: false
+        type: integer
+      - description: Query string specifying properties to search for
+        in: query
+        name: $top
+        required: false
+        type: integer
+      - name: sort
+        in: query
+        description: Query string specifying properties to sort with
+        required: false
+        type: string
+        pattern: '[- +]{0,1}(name|id)'
+      responses:
+        200:
+          description: Successfully retrieved workflows
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get a list of workflow instances
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+      x-view: workflows.2.0.json
+    post:
+      description: >
+        Run a workflow by specifying a workflow graph injectable name.
+        The workflow is not associated with a node.
+      operationId: workflowsPost
+      parameters:
+      - description: >
+          The body must contain the name property with the
+          value set to the injectable name of the workflow
+          graph to run
+        in: body
+        name: body
+        required: false
+        schema:
+          $ref: '#/definitions/post_workflow'
+      - description:
+          Optionally specify the injectable name of the workflow graph to run
+        in: query
+        name: name
+        required: false
+        type: string
+      responses:
+        201:
+          description: Successfully started the specified workflow
+          schema:
+            type: object
+        500:
+          description: Workflow was not run
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Upload failed
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Run a workflow
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsWrite
+    x-swagger-router-controller: workflows
+  /workflows/graphs:
+    get:
+      description: Get a list of all workflow graphs available to run.
+      operationId: workflowsGetGraphs
+      responses:
+        200:
+          description: Successfully retrieved all workflow graphs
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of workflow graphs
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+      x-view: workflowGraphs.2.0.json
+    put:
+      description: Create or modify a workflow graph in the graph library.
+      operationId: workflowsPutGraphs
+      parameters:
+      - description: The workflow graph properties
+        in: body
+        name: body
+        required: false
+        schema:
+          $ref: '#/definitions/workflow_graph'
+      responses:
+        201:
+          description: Successfully created or modified a workflow graph.
+          schema:
+            type: object
+        500:
+          description: Workflow graph was not created or modified.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Upload failed
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put a graph
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsWrite
+      x-swagger-schema: workflowGraphs.2.0.json#/definitions/workflowGraphsPut
+    x-swagger-router-controller: workflowGraphs
+  /workflows/graphs/{injectableName}:
+    delete:
+      description:
+        Delete the workflow graph with the specified value of the injectableName property.
+      operationId: workflowsDeleteGraphsByName
+      parameters:
+      - description: The workflow graph injectable name
+        in: path
+        name: injectableName
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified workflow graph
+          schema:
+            type: object
+        404:
+          description: The graph with the specified injectable name was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified workflow graph
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsRemove
+    get:
+      description:
+        Get the workflow graph with the specified value of the injectableName property.
+      operationId: workflowsGetGraphsByName
+      parameters:
+      - description: The workflow graph injectable name
+        in: path
+        name: injectableName
+        required: true
+        type: string
+      responses:
+        200:
+          description:
+            Successfully retrieved the workflow graph with the specified injectable name
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified workflow graph
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+      x-view: workflowGraphs.2.0.json
+    x-swagger-router-controller: workflowGraphs
+  /workflows/tasks:
+    get:
+      description: Get a list of all workflow tasks that can be added to a workflow.
+      operationId: workflowsGetAllTasks
+      responses:
+        200:
+          description: Successfully retrieved workflow tasks
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get list of workflow tasks
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+      x-view: workflowTasks.2.0.json
+    put:
+      description: Create or update a workflow task in the library of tasks.
+      operationId: workflowsPutTask
+      parameters:
+      - description: The workflow task properties
+        in: body
+        name: body
+        required: false
+        schema:
+          $ref: '#/definitions/workflow_task'
+      responses:
+        201:
+          description: Successfully created or modified workflow task
+          schema:
+            type: object
+        500:
+          description: Failed to create or modify workflow task.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Upload failed
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Put a workflow task
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsWrite
+    x-swagger-router-controller: workflowTasks
+  /workflows/tasks/{injectableName}:
+    delete:
+      description:
+        Delete the workflow task with the specified value of the injectableName property.
+      operationId: workflowsDeleteTasksByName
+      parameters:
+      - description: The task injectable name
+        in: path
+        name: injectableName
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified workflow task
+          schema:
+            type: object
+        404:
+          description: The workflow task with the specified injectable name was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified workflow task
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsRemove
+    get:
+      description: Get the task with the specified value of the injectableName property.
+      operationId: workflowsGetTasksByName
+      parameters:
+      - description: The task injectable name
+        in: path
+        name: injectableName
+        required: true
+        type: string
+      responses:
+        200:
+          description:
+            Successfully retrieved the workflow task with the specified injectable name
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified workflow task
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+      x-view: workflowTasks.2.0.json
+    x-swagger-router-controller: workflowTasks
+  /workflows/{identifier}:
+    delete:
+      description: Delete the workflow with the specified instance identifier.
+      operationId: workflowsDeleteByInstanceId
+      parameters:
+      - description: The workflow instance identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        204:
+          description: Successfully deleted the specified workflow
+          schema:
+            type: object
+        404:
+          description: The specified workflow was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete the specified workflow
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsRemove
+    get:
+      description: Get the workflow with the specified instance identifier.
+      operationId: workflowsGetByInstanceId
+      parameters:
+      - description: The workflow instance identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      responses:
+        200:
+          description: Successfully retrieved the specified workflow
+          schema:
+            type: object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Get the specified workflow
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Read
+      - workflowsRead
+      x-view: workflows.2.0.json
+    x-swagger-router-controller: workflows
+  /workflows/{identifier}/action:
+    put:
+      description: >
+        Perform the specified action on the workflow with the specified
+        instance identifier. Currently, the cancel action is supported.
+      operationId: workflowsAction
+      parameters:
+      - description: The workflow instance identifier
+        in: path
+        name: identifier
+        required: true
+        type: string
+      - description: The action property with the value of the desired action
+        in: body
+        name: action
+        required: true
+        schema:
+          $ref: '#/definitions/action'
+      responses:
+        202:
+          description: Successfully performed the action on the specified workflow
+          schema:
+            type: object
+        404:
+          description: The workflow with the identifier was not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Perform an action on the specified workflow
+      tags:
+      - /api/2.0
+      x-authentication-type:
+      - jwt
+      x-privileges:
+      - Write
+      - workflowsModify
+    x-swagger-router-controller: workflows
+produces:
+- application/json
+schemes:
+- http
+- https
+swagger: '2.0'
+tags:
+- description: RackHD 2.0 API
+  name: /api/2.0

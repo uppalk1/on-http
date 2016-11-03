@@ -5,8 +5,7 @@
 var _ = require('lodash'),  /* jshint ignore: line */
     _di = require('di'),
     onCore = require('on-core'),
-    onTasks = require('on-tasks'),
-    ws = require('ws');
+    onTasks = require('on-tasks');
 
 var self = module.exports = {
     injector: null,
@@ -37,19 +36,21 @@ function onHttpContextFactory(di, directory) {
 
         injectables: _.flattenDeep([
             helper.requireGlob(__dirname + '/lib/api/login/*.js'),
+            helper.requireGlob(__dirname + '/lib/api/view/*.js'),
             helper.requireGlob(__dirname + '/lib/api/1.1/**/*.js'),
             helper.requireGlob(__dirname + '/lib/services/**/*.js'),
             helper.requireGlob(__dirname + '/lib/serializables/**/*.js'),
             require('./app'),
             helper.requireWrapper('rimraf', 'rimraf', undefined, __dirname),
-            helper.requireWrapper('os-tmpdir', 'osTmpdir', undefined, __dirname)
+            helper.requireWrapper('os-tmpdir', 'osTmpdir', undefined, __dirname),
+            helper.requireWrapper('fs-extra', 'fs', undefined, __dirname),
+            helper.requireWrapper('os', 'os', undefined, __dirname),
+            helper.requireWrapper('node-cache', 'node-cache', undefined, __dirname)
         ]),
 
         prerequisiteInjectables: _.flattenDeep([
             core.workflowInjectables,
             onTasks.injectables,
-            helper.simpleWrapper(ws, 'ws'),
-            helper.simpleWrapper(ws.Server, 'WebSocketServer'),
             helper.requireWrapper('swagger-express-mw', 'swagger', undefined, __dirname)
         ])
     };

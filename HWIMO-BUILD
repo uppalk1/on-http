@@ -1,25 +1,25 @@
 #!/bin/bash
 
-# Copyright 2015, EMC, Inc.
+# Copyright 2015, 2016, EMC, Inc.
 
 # debian packages expected...
 # apt-get install git pbuilder dh-make ubuntu-dev-tools devscripts
 # apt-get install nodejs nodejs-legacy npm
 
+set -e
+set -x
+
+rm -rf packagebuild
 git clone . packagebuild
 pushd packagebuild
+cp ../package.json .
 rsync -ar ../debianstatic/on-http/ debian
 
 rm -rf node_modules
-npm install
+npm install --cache=`pwd`
 npm run apidoc
-
-# The following is a workaround for a bug in npm 1.3.10 where
-# prune --production removes the redfish-node module which is needed.
-# We are replacing "npm prune --production with a fresh
-# "npm install --production"
-rm -rf node_modules
-npm install --production
+npm run taskdoc
+npm prune --production
 
 git log -n 1 --pretty=format:%h.%ai.%s > commitstring.txt
 

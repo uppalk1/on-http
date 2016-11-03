@@ -33,17 +33,24 @@ swagger:
 
     _swagger_renderer:
       name: swagger_render
-      templateNameKey: x-swagger-template
+      templateNameKey: x-view
+
+    _rackhd_validator:
+      name: rackhd_validator
+      validateResponse: true
+      schemaNameKey: x-swagger-schema
 
     # pipe for all swagger-node controllers
     swagger_controllers:
-      - onError: json_error_handler
+      - onError: error_handler
       - cors
       - swagger_params_parser
+      - swagger_locals
       - swagger_authn
       - swagger_authz
       - swagger_security
       - _swagger_validate
+      - _rackhd_validator
       - express_compatibility
       - _swagger_deserializer
       - _router
@@ -55,4 +62,3 @@ swagger:
       name: swagger_raw
 
 # any other values in this file are just loaded into the config for application access...
-

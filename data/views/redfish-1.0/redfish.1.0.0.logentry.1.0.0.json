@@ -1,0 +1,23 @@
+{
+    "@odata.context" : "<%= basepath %>/$metadata#Systems/Links/Members/<%= identifier %>/LogServices/Members/<%=type%>/$entity",
+    "@odata.id": "<%= basepath %>/Systems/<%=identifier%>/LogServices/<%=type%>/Entries/<%= entry.logId %>",
+    "@odata.type": "#LogEntry.1.0.0.LogEntry",
+    "Oem": {},
+    "Id": "<%= entry.logId %>",
+    "Name": "name",
+    "EntryType": "<%= type %>",
+    "Created": "<%= entry.timestamp %>",
+    "OemRecordFormat": "",
+    "EntryCode": "<%= entry.value %>",
+    "SensorType": "<%= entry.sensorType %>",
+    "SensorNumber": <%= entry.sensorNumber %>,
+    "Message": "<%= entry.event %>",
+    "MessageId": "",
+    "MessageArgs": [],
+    "Links": {
+        "Oem": {},
+        "OriginOfCondition": {
+            "@odata.id": "<%= entry.origin || 'null' %>"
+        }
+    }
+}

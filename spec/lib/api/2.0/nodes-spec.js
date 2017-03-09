@@ -100,7 +100,6 @@ describe('2.0 Http.Api.Nodes', function () {
 
     var node = {
         autoDiscover: "false",
-        associatedServer: "abc/chassis/blade",
         catalogs:'/api/2.0/nodes/1234abcd1234abcd1234abcd/catalogs',
         id: '1234abcd1234abcd1234abcd',
         name: 'name',
@@ -131,7 +130,6 @@ describe('2.0 Http.Api.Nodes', function () {
 
     var rawNode = {
         autoDiscover: "false",
-        associatedServer: "abc/chassis/blade",
         id: '1234abcd1234abcd1234abcd',
         name: 'name',
         identifiers: [],
